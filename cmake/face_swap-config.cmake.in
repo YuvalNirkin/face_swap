@@ -1,0 +1,20 @@
+# - Config file for the face_swap package
+# It defines the following variables
+#  face_swap_INCLUDE_DIRS - include directories for face_swap
+#  face_swap_LIBRARIES    - libraries to link against
+#  face_swap_EXECUTABLE   - the face_swap executable
+ 
+# Calculated paths
+get_filename_component(face_swap_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
+set(face_swap_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include")
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET face_swap AND NOT face_swap_BINARY_DIR)
+  include("${face_swap_CMAKE_DIR}/face_swap-targets.cmake")
+endif()
+ 
+# These are IMPORTED targets created by face_swap-targets.cmake
+set(face_swap_LIBRARIES face_swap)
+if(TARGET face_swap_images)
+	set(face_swap_EXECUTABLE face_swap_images)
+endif()
