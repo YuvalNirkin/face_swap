@@ -1,12 +1,12 @@
+![alt text](https://yuvalnirkin.github.io/face_swap/images/face_swap_samples.jpg "Samples")
+
 # End-to-end, automatic face swapping pipeline
 [Yuval Nirkin](http://www.nirkin.com/), [Iacopo Masi](http://www-bcf.usc.edu/~iacopoma/), [Anh Tuan Tran](https://sites.google.com/site/anhttranusc/), [Tal Hassner](http://www.openu.ac.il/home/hassner/), and [Gerard Medioni](http://iris.usc.edu/people/medioni/index.html).
 
-## Overview
-
-![alt text](https://yuvalnirkin.github.io/face_swap/images/face_swap_samples.jpg "Samples")
-
-Code for the image-to-image face swapping method described in the paper:
+Code for the automatic, image-to-image face swapping method described in the paper:
 Yuval Nirkin, Iacopo Masi, Anh Tuan Tran, Tal Hassner, Gerard Medioni, "On Face Segmentation, Face Swapping, and Face Perception," arXiv preprint.
+
+Please see [project page](http://www.openu.ac.il/home/hassner/projects/faceswap/) for more details, more resources and updates on this project.
 
 If you find this code useful, please make sure to cite our paper in your work.
 
