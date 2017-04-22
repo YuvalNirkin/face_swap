@@ -1,11 +1,15 @@
-# Nirkin Face Swap - Swapping faces in extremely hard conditions
-Created by Yuval Nirkin.
-
-[nirkin.com](http://www.nirkin.com/)
+# End-to-end, automatic face swapping pipeline
+[Yuval Nirkin](http://www.nirkin.com/), [Iacopo Masi](http://www-bcf.usc.edu/~iacopoma/), [Anh Tuan Tran](https://sites.google.com/site/anhttranusc/), [Tal Hassner](http://www.openu.ac.il/home/hassner/), and [Gerard Medioni](http://iris.usc.edu/people/medioni/index.html).
 
 ## Overview
 
 ![alt text](https://yuvalnirkin.github.io/face_swap/images/face_swap_samples.jpg "Samples")
+
+Code for the image-to-image face swapping method described in the paper:
+Yuval Nirkin, Iacopo Masi, Anh Tuan Tran, Tal Hassner, Gerard Medioni, "On Face Segmentation, Face Swapping, and Face Perception," arXiv preprint.
+
+If you find this code useful, please make sure to cite our paper in your work.
+
 
 ## Dependencies
 | Library                                                            | Minimum Version | Notes                                    |
@@ -30,4 +34,14 @@ Created by Yuval Nirkin.
 ## Usage
 - For using the library's C++ interface, please take a look at the [Doxygen generated documentation](https://yuvalnirkin.github.io/face_swap/).
 
-## Bibliography
+## Related projects
+- [Deep face segmentation](https://github.com/YuvalNirkin/face_segmentation), used to segment face regions in the face swapping pipeline.
+- [Interactive system for fast face segmentation ground truth labeling](https://github.com/YuvalNirkin/face_video_segment), used to produce the training set for our deep face segmentation.
+- [CNN3DMM](http://www.openu.ac.il/home/hassner/projects/CNN3DMM/), used in the tests reported in the paper to estimate 3D face shapes from single images.
+- [ResFace101](http://www.openu.ac.il/home/hassner/projects/augmented_faces/), deep face recognition used in the paper to test face swapping capabilities. 
+
+## Copyright
+Copyright 2017, Yuval Nirkin, Iacopo Masi, Anh Tuan Tran, Tal Hassner, and Gerard Medioni 
+
+The SOFTWARE provided in this page is provided "as is", without any guarantee made as to its suitability or fitness for any particular use. It may contain bugs, so use of this tool is at your own risk. We take no responsibility for any damage of any sort that may unintentionally be caused through its use.
+
