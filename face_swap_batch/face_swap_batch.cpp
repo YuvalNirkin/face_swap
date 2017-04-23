@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 		options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "display the help message")
-            ("verbose,v", value<unsigned int>(&verbose)->default_value(0), "output debug information")
+            ("verbose,v", value<unsigned int>(&verbose)->default_value(0), "output debug information [0, 4]")
 			("input,i", value<string>(&input_path)->required(), "path to input directory or image pairs list")
 			("output,o", value<string>(&output_path)->required(), "output directory")
             ("segmentations,s", value<string>(&seg_path)->default_value(""), "segmentations directory")
@@ -319,42 +319,48 @@ int main(int argc, char* argv[])
             // Debug
             if (verbose > 0)
             {
-                // Write projected meshes
-                string debug_src_mesh_path = (path(output_path) /=
-                    (path(curr_output_path).stem() += "_src_mesh.jpg")).string();
-                cv::Mat debug_src_mesh_img = fs.debugSourceMesh();
-                cv::imwrite(debug_src_mesh_path, debug_src_mesh_img);
+				// Write rendered image
+				string debug_render_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_render.jpg")).string();
+				cv::Mat debug_render_img = fs.debugRender();
+				cv::imwrite(debug_render_path, debug_render_img); 
+            }
+			if (verbose > 1)
+			{
+				// Write projected meshes
+				string debug_src_mesh_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_src_mesh.jpg")).string();
+				cv::Mat debug_src_mesh_img = fs.debugSourceMesh();
+				cv::imwrite(debug_src_mesh_path, debug_src_mesh_img);
 
-                string debug_tgt_mesh_path = (path(output_path) /=
-                    (path(curr_output_path).stem() += "_tgt_mesh.jpg")).string();
-                cv::Mat debug_tgt_mesh_img = fs.debugTargetMesh();
-                cv::imwrite(debug_tgt_mesh_path, debug_tgt_mesh_img);
+				string debug_tgt_mesh_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_tgt_mesh.jpg")).string();
+				cv::Mat debug_tgt_mesh_img = fs.debugTargetMesh();
+				cv::imwrite(debug_tgt_mesh_path, debug_tgt_mesh_img);
+			}
+			if (verbose > 2)
+			{
+				// Write landmarks render
+				string debug_src_landmarks_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_src_landmarks.jpg")).string();
+				cv::Mat debug_src_landmarks_img = fs.debugSourceLandmarks();
+				cv::imwrite(debug_src_landmarks_path, debug_src_landmarks_img);
 
-                // Write meshes
-                string src_ply_path = (path(output_path) /=
-                    (path(curr_output_path).stem() += "_src_mesh.ply")).string();
-                string tgt_ply_path = (path(output_path) /=
-                    (path(curr_output_path).stem() += "_tgt_mesh.ply")).string();
+				string debug_tgt_landmarks_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_tgt_landmarks.jpg")).string();
+				cv::Mat debug_tgt_landmarks_img = fs.debugTargetLandmarks();
+				cv::imwrite(debug_tgt_landmarks_path, debug_tgt_landmarks_img);
+			}
+			if (verbose > 3)
+			{
+				// Write meshes
+				string src_ply_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_src_mesh.ply")).string();
+				string tgt_ply_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_tgt_mesh.ply")).string();
 				face_swap::Mesh::save_ply(fs.getSourceMesh(), src_ply_path);
 				face_swap::Mesh::save_ply(fs.getTargetMesh(), tgt_ply_path);
-
-                // Write landmarks render
-                string debug_src_landmarks_path = (path(output_path) /=
-                    (path(curr_output_path).stem() += "_src_landmarks.jpg")).string();
-                cv::Mat debug_src_landmarks_img = fs.debugSourceLandmarks();
-                cv::imwrite(debug_src_landmarks_path, debug_src_landmarks_img);
-
-                string debug_tgt_landmarks_path = (path(output_path) /=
-                    (path(curr_output_path).stem() += "_tgt_landmarks.jpg")).string();
-                cv::Mat debug_tgt_landmarks_img = fs.debugTargetLandmarks();
-                cv::imwrite(debug_tgt_landmarks_path, debug_tgt_landmarks_img);
-
-                // Write rendered image
-                string debug_render_path = (path(output_path) /=
-                    (path(curr_output_path).stem() += "_render.jpg")).string();
-                cv::Mat debug_render_img = fs.debugRender();
-                cv::imwrite(debug_render_path, debug_render_img);
-            }
+			}
         }
 	}
 	catch (std::exception& e)
