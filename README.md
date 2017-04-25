@@ -39,7 +39,7 @@ If you find this code useful, please make sure to cite our paper in your work.
 ## Related projects
 - [Deep face segmentation](https://github.com/YuvalNirkin/face_segmentation), used to segment face regions in the face swapping pipeline.
 - [Interactive system for fast face segmentation ground truth labeling](https://github.com/YuvalNirkin/face_video_segment), used to produce the training set for our deep face segmentation.
-- [CNN3DMM](http://www.openu.ac.il/home/hassner/projects/CNN3DMM/), used in the tests reported in the paper to estimate 3D face shapes from single images.
+- [CNN3DMM](http://www.openu.ac.il/home/hassner/projects/CNN3DMM/), used to estimate 3D face shapes from single images.
 - [ResFace101](http://www.openu.ac.il/home/hassner/projects/augmented_faces/), deep face recognition used in the paper to test face swapping capabilities. 
 
 ## Copyright
