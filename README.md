@@ -6,7 +6,7 @@ LFW G.W. Bush photos swapped using our method onto very different subjects and i
 # Overview
 Code for the automatic, image-to-image face swapping method described in the paper:
 
-Yuval Nirkin, Iacopo Masi, Anh Tuan Tran, Tal Hassner, Gerard Medioni, "[On Face Segmentation, Face Swapping, and Face Perception](https://arxiv.org/pdf/1704.06729.pdf)," arXiv preprint.
+Yuval Nirkin, Iacopo Masi, Anh Tuan Tran, Tal Hassner, Gerard Medioni, "[On Face Segmentation, Face Swapping, and Face Perception](https://arxiv.org/pdf/1704.06729.pdf)", arXiv preprint.
 
 Please see [project page](http://www.openu.ac.il/home/hassner/projects/faceswap/) for more details, more resources and updates on this project.
 
