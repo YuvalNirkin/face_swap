@@ -14,7 +14,7 @@ using namespace cv;
 
 FaceServices2::FaceServices2(void)
 {
-	omp_set_num_threads(8);
+	//omp_set_num_threads(8);
 	prevEF = 1000;
 	mstep = 0.0001;
 	countFail = 0;

@@ -94,7 +94,21 @@ namespace face_swap
 		*/
         bool preprocessImages(const cv::Mat& img, const cv::Mat& seg,
             std::vector<cv::Point>& landmarks, std::vector<cv::Point>& cropped_landmarks,
-            cv::Mat& cropped_img, cv::Mat& cropped_seg, cv::Rect& bbox = cv::Rect());
+            cv::Mat& cropped_img, cv::Mat& cropped_seg, cv::Rect& bbox);
+
+		/** Crops the image and it's corresponding segmentation according
+		to the detected face landmarks.
+		@param[in] img The image to crop.
+		@param[in] seg The segmentation to crop (must be the same size as the image).
+		@param[out] landmarks The detected face landmarks for the original image.
+		@param[out] cropped_landmarks The detected face landmarks for the cropped image.
+		@param[out] cropped_img The cropped image.
+		@param[out] cropped_seg The cropped segmentation.
+		@return true for success and false for failure.
+		*/
+        bool preprocessImages(const cv::Mat& img, const cv::Mat& seg,
+            std::vector<cv::Point>& landmarks, std::vector<cv::Point>& cropped_landmarks,
+            cv::Mat& cropped_img, cv::Mat& cropped_seg);
 
 		/**	Generate texture for the mesh based on the image size, intrinsic and
 		extrinsic transformations.

@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
         }
 
         // Read config file
-        ifstream ifs(vm["cfg"].as<string>());
+        std::ifstream ifs(vm["cfg"].as<string>());
         store(parse_config_file(ifs, desc), vm);
 
         notify(vm);

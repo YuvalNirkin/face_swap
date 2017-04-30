@@ -198,6 +198,15 @@ namespace face_swap
         return true;
     }
 
+    bool FaceSwap::preprocessImages(const cv::Mat& img, const cv::Mat& seg,
+        std::vector<cv::Point>& landmarks, std::vector<cv::Point>& cropped_landmarks,
+        cv::Mat& cropped_img, cv::Mat& cropped_seg)
+    {
+        cv::Rect bbox;
+        return preprocessImages(img, seg, landmarks, cropped_landmarks,
+            cropped_img, cropped_seg, bbox);
+    }
+
     void FaceSwap::generateTexture(const Mesh& mesh, const cv::Mat& img, 
         const cv::Mat& seg, const cv::Mat& vecR, const cv::Mat& vecT,
         const cv::Mat& K, cv::Mat& tex, cv::Mat& uv)
