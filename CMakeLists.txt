@@ -14,7 +14,7 @@ if(WIN32)
 	set(DEF_INSTALL_CMAKE_DIR cmake)
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC")
-	set(DEF_INSTALL_CMAKE_DIR lib/cmake/face_swap)
+	set(DEF_INSTALL_CMAKE_DIR lib/cmake/${PROJECT_NAME})
 endif()
 set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
 	"Installation directory for CMake files")
