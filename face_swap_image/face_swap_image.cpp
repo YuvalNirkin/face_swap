@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 		options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "display the help message")
-            ("verbose,v", value<unsigned int>(&verbose)->default_value(0), "output debug information")
+            ("verbose,v", value<unsigned int>(&verbose)->default_value(0), "output debug information [0, 4]")
 			("input,i", value<std::vector<string>>(&input_paths)->required(), "image paths [source target]")
 			("output,o", value<string>(&output_path)->required(), "output image path")
             ("segmentations,s", value<std::vector<string>>(&seg_paths), "segmentation paths [source target]")
