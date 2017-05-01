@@ -66,14 +66,14 @@ int main(int argc, char* argv[])
             ("expressions,e", value<bool>(&with_expr)->default_value(true), "with expressions")
 			("gpu", value<bool>(&with_gpu)->default_value(true), "toggle GPU / CPU")
 			("gpu_id", value<unsigned int>(&gpu_device_id)->default_value(0), "GPU's device id")
-            ("cfg", value<string>(&cfg_path)->default_value("face_swap.cfg"), "configuration file (.cfg)")
+            ("cfg", value<string>(&cfg_path)->default_value("face_swap_image.cfg"), "configuration file (.cfg)")
 			;
 		variables_map vm;
 		store(command_line_parser(argc, argv).options(desc).
 			positional(positional_options_description().add("input", -1)).run(), vm);
 
         if (vm.count("help")) {
-            cout << "Usage: face_swap [options]" << endl;
+            cout << "Usage: face_swap_image [options]" << endl;
             cout << desc << endl;
             exit(0);
         }
@@ -170,54 +170,62 @@ int main(int argc, char* argv[])
             throw std::runtime_error("Face swap failed!");
 
         // Write output to file
-        string file_path = output_path;
+        path out_file_path = output_path;
+		path out_dir_path = output_path;
         if (is_directory(output_path))
         {
             path outputName = (path(input_paths[0]).stem() += "_") += 
                 (path(input_paths[1]).stem() += ".jpg");
-            file_path = (path(output_path) /= outputName).string();
+			out_file_path = path(output_path) /= outputName;
         }
-        cv::imwrite(file_path, rendered_img);
+		else out_dir_path = path(output_path).parent_path();
+        cv::imwrite(out_file_path.string(), rendered_img);
 
         // Debug
         if (verbose > 0)
         {
-            // Write projected meshes
-            string debug_src_mesh_path = (path(output_path) /=
-                (path(file_path).stem() += "_src_mesh.jpg")).string();
-            cv::Mat debug_src_mesh_img = fs.debugSourceMesh();
-            cv::imwrite(debug_src_mesh_path, debug_src_mesh_img);
-
-            string debug_tgt_mesh_path = (path(output_path) /=
-                (path(file_path).stem() += "_tgt_mesh.jpg")).string();
-            cv::Mat debug_tgt_mesh_img = fs.debugTargetMesh();
-            cv::imwrite(debug_tgt_mesh_path, debug_tgt_mesh_img);
-
-            // Write meshes
-            string src_ply_path = (path(output_path) /=
-                (path(file_path).stem() += "_src_mesh.ply")).string();
-            string tgt_ply_path = (path(output_path) /=
-                (path(file_path).stem() += "_tgt_mesh.ply")).string();
-			face_swap::Mesh::save_ply(fs.getSourceMesh(), src_ply_path);
-			face_swap::Mesh::save_ply(fs.getTargetMesh(), tgt_ply_path);
-
-            // Write landmarks render
-            string debug_src_landmarks_path = (path(output_path) /=
-                (path(file_path).stem() += "_src_landmarks.jpg")).string();
-            cv::Mat debug_src_landmarks_img = fs.debugSourceLandmarks();
-            cv::imwrite(debug_src_landmarks_path, debug_src_landmarks_img);
-
-            string debug_tgt_landmarks_path = (path(output_path) /=
-                (path(file_path).stem() += "_tgt_landmarks.jpg")).string();
-            cv::Mat debug_tgt_landmarks_img = fs.debugTargetLandmarks();
-            cv::imwrite(debug_tgt_landmarks_path, debug_tgt_landmarks_img);
-
-            // Write rendered image
-            string debug_render_path = (path(output_path) /=
-                (path(file_path).stem() += "_render.jpg")).string();
-            cv::Mat debug_render_img = fs.debugRender();
-            cv::imwrite(debug_render_path, debug_render_img);
+			// Write rendered image
+			path debug_render_path = out_dir_path /
+				(out_file_path.stem() += "_render.jpg");
+			cv::Mat debug_render_img = fs.debugRender();
+			cv::imwrite(debug_render_path.string(), debug_render_img); 
         }
+		if (verbose > 1)
+		{
+			// Write projected meshes
+			path debug_src_mesh_path = out_dir_path /
+				(out_file_path.stem() += "_src_mesh.jpg");
+			cv::Mat debug_src_mesh_img = fs.debugSourceMesh();
+			cv::imwrite(debug_src_mesh_path.string(), debug_src_mesh_img);
+
+			path debug_tgt_mesh_path = out_dir_path /
+				(out_file_path.stem() += "_tgt_mesh.jpg");
+			cv::Mat debug_tgt_mesh_img = fs.debugTargetMesh();
+			cv::imwrite(debug_tgt_mesh_path.string(), debug_tgt_mesh_img);
+		}
+		if (verbose > 2)
+		{
+			// Write landmarks render
+			path debug_src_lms_path = out_dir_path /
+				(out_file_path.stem() += "_src_landmarks.jpg");
+			cv::Mat debug_src_lms_img = fs.debugSourceLandmarks();
+			cv::imwrite(debug_src_lms_path.string(), debug_src_lms_img);
+
+			path debug_tgt_lms_path = out_dir_path /
+				(out_file_path.stem() += "_tgt_landmarks.jpg");
+			cv::Mat debug_tgt_lms_img = fs.debugTargetLandmarks();
+			cv::imwrite(debug_tgt_lms_path.string(), debug_tgt_lms_img);
+		}
+		if (verbose > 3)
+		{
+			// Write meshes
+			path debug_src_ply_path = out_dir_path /
+				(out_file_path.stem() += "_src_mesh.ply");
+			path debug_tgt_ply_path = out_dir_path /
+				(out_file_path.stem() += "_tgt_mesh.ply");
+			face_swap::Mesh::save_ply(fs.getSourceMesh(), debug_src_ply_path.string());
+			face_swap::Mesh::save_ply(fs.getTargetMesh(), debug_tgt_ply_path.string());
+		}
 	}
 	catch (std::exception& e)
 	{
