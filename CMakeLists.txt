@@ -134,3 +134,7 @@ install(FILES
   
 # Install the export set for use with the install-tree
 install(EXPORT face_swap-targets DESTINATION cmake COMPONENT dev)
+
+# Install sample data
+file(GLOB SAMPLE_IMAGES "data/images/*.jpg")
+install(FILES ${SAMPLE_IMAGES} DESTINATION data/images)
