@@ -35,7 +35,7 @@ If you find this code useful, please make sure to cite our paper in your work.
 
 ## Usage
 - For using the library's C++ interface, please take a look at the [Doxygen generated documentation](https://yuvalnirkin.github.io/face_swap/).
-- For running the segmentation on a pair of images, it's best to first create a configuration file because of the large number of parameters. For this example create a configuration file "test.cfg" under "bin" in the installation directory  with the following parameters:
+- For running the segmentation on a pair of images, it's best to first create a configuration file because of the large number of parameters. For this example create a configuration file "test.cfg" under "bin" in the installation directory with the following parameters:
 ```Ini
 landmarks = ../data/shape_predictor_68_face_landmarks.dat       # path to landmarks model file
 model_3dmm_h5 = ../data/BaselFaceModel_mod_wForehead_noEars.h5  # path to 3DMM file (.h5)
@@ -54,8 +54,9 @@ input = ../data/images/brad_pitt_01.jpg     # source image
 input = ../data/images/bruce_willis_01.jpg  # target image
 output = out.jpg                            # output image or directory
 ```
-Now run the following command:
+Now run the following commands:
 ```Bash
+cd path/to/face_swap/bin
 face_swap_image --cfg test.cfg
 ```
 - For running the segmentation on a list of images, prepare a csv file in which each line contains the paths to a pair of images, separated by a comma. For this example create a file "img_list.csv" like the following:
@@ -69,8 +70,9 @@ log = test.log                              # path to log file
 input = img_list.csv                        # list file or directory
 output = .                                  # output directory
 ```
-Now run the following command:
+Now run the following commands:
 ```Bash
+cd path/to/face_swap/bin
 face_swap_batch --cfg test.cfg
 ```
 - It's also possible to run on entire image directories. In that case all possible pairs will be processed. Just specify a directory in the input parameter for face_swap_batch.
