@@ -29,7 +29,7 @@ If you find this code useful, please make sure to cite our paper in your work.
 ## Installation
 - Use CMake and your favorite compiler to build and install the library.
 - Download the [landmarks model file](http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2) and extract to "data" in the installation directory.
-- Download the [face_seg_fcn8s.zip](https://github.com/YuvalNirkin/face_segmentation/releases/download/0.9/face_seg_fcn8s.zip) and extract to "data" in the installation directory.
+- Download the [face_seg_fcn8s.zip](https://github.com/YuvalNirkin/face_segmentation/releases/download/1.0/face_seg_fcn8s.zip) and extract to "data" in the installation directory.
 - Download the [3dmm_cnn_resnet_101.zip](https://github.com/YuvalNirkin/face_swap/releases/download/0.9/3dmm_cnn_resnet_101.zip) and extract to "data" in the installation directory.
 - Add face_swap/bin to path.
 
