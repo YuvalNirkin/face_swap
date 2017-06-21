@@ -230,7 +230,7 @@ namespace face_swap
         float ry = vecR.at<float>(1);
         float rz = vecR.at<float>(2);
         float angle = (float)sqrt(rx * rx + ry * ry + rz * rz);
-        if(abs(angle) > 1e-6f)
+        if(std::abs(angle) > 1e-6f)
             glRotatef(angle / CV_PI*180.0f, rx / angle, ry / angle, rz / angle);
 
         drawMesh();
