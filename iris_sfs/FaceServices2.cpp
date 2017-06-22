@@ -664,7 +664,7 @@ bool FaceServices2::estimatePoseExpr(cv::Mat colorIm, cv::Mat lms, cv::Mat alpha
 	landModel0 = festimator.getLM(shape,yaw);
 	std::vector<int> lmVisInd;
 	for (int i=0;i<60;i++){
-		if (i > 16 || abs(yaw) <= M_PI/10 || (yaw > M_PI/10 && i > 7) || (yaw < -M_PI/10 && i < 9))
+		if ((yaw > M_PI/10 && i > 7) || (yaw < -M_PI/10 && i < 9) || i > 16 || abs(yaw) <= M_PI/10)
 			lmVisInd.push_back(i);
 	}
 	cv::Mat tmpIm = colorIm/5;
