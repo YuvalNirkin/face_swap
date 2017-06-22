@@ -771,7 +771,7 @@ bool FaceServices2::updatePoseExpr(cv::Mat colorIm, cv::Mat lms, cv::Mat alpha, 
 	Mat landModel0 = festimator.getLM(shape,yaw);
 	std::vector<int> lmVisInd;
 	for (int i=0;i<60;i++){
-		if (i > 16 || abs(yaw) <= M_PI/10 || (yaw > M_PI/10 && i > 7) || (yaw < -M_PI/10 && i < 9))
+		if (i > 16 || std::abs(yaw) <= M_PI/10 || (yaw > M_PI/10 && i > 7) || (yaw < -M_PI/10 && i < 9))
 			lmVisInd.push_back(i);
 	}
 	cv::Mat landModel = cv::Mat( lmVisInd.size(),3,CV_32F);
