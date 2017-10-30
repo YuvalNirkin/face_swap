@@ -178,8 +178,8 @@ namespace face_swap
         std::vector<cv::Point> m_src_landmarks, m_tgt_landmarks;
 
     public:
-        cv::Mat debugSource();
-        cv::Mat debugTarget();
+        cv::Mat debugSourceMeshWireframe();
+        cv::Mat debugTargetMeshWireframe();
         cv::Mat debug();
         cv::Mat debugSourceMesh();
         cv::Mat debugTargetMesh();

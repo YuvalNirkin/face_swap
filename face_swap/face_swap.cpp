@@ -305,7 +305,7 @@ namespace face_swap
         return blend;
     }
 
-    cv::Mat FaceSwap::debugSource()
+    cv::Mat FaceSwap::debugSourceMeshWireframe()
     {
         const float scale = 3.0f;
         cv::Mat out = m_src_cropped_img.clone();
@@ -315,11 +315,11 @@ namespace face_swap
 
         // Render
         renderWireframe(out, m_src_mesh, P, scale);
-        sfl::render(out, scaled_landmarks, false, cv::Scalar(0, 0, 255));
+        //sfl::render(out, scaled_landmarks, false, cv::Scalar(0, 0, 255));
         return out;
     }
 
-    cv::Mat FaceSwap::debugTarget()
+    cv::Mat FaceSwap::debugTargetMeshWireframe()
     {
         const float scale = 3.0f;
         cv::Mat out = m_tgt_cropped_img.clone();
@@ -329,14 +329,14 @@ namespace face_swap
 
         // Render
         renderWireframe(out, m_dst_mesh, P, scale);
-        sfl::render(out, scaled_landmarks, false, cv::Scalar(0, 0, 255));
+        //sfl::render(out, scaled_landmarks, false, cv::Scalar(0, 0, 255));
         return out;
     }
 
     cv::Mat FaceSwap::debug()
     {
-        cv::Mat src_d = debugSource();
-        cv::Mat tgt_d = debugTarget();
+        cv::Mat src_d = debugSourceMeshWireframe();
+        cv::Mat tgt_d = debugTargetMeshWireframe();
         cv::Size max_size(std::max(src_d.cols, tgt_d.cols), 
             std::max(src_d.rows, tgt_d.rows));
 

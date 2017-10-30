@@ -226,6 +226,19 @@ int main(int argc, char* argv[])
 			face_swap::Mesh::save_ply(fs.getSourceMesh(), debug_src_ply_path.string());
 			face_swap::Mesh::save_ply(fs.getTargetMesh(), debug_tgt_ply_path.string());
 		}
+		if (verbose > 4)
+		{
+			// Write projected meshes wireframe
+			path debug_src_mesh_wire_path = out_dir_path /
+				(out_file_path.stem() += "_src_mesh_wire.jpg");
+			cv::Mat debug_src_mesh_wire_img = fs.debugSourceMeshWireframe();
+			cv::imwrite(debug_src_mesh_wire_path.string(), debug_src_mesh_wire_img);
+
+			path debug_tgt_mesh_wire_path = out_dir_path /
+				(out_file_path.stem() += "_tgt_mesh_wire.jpg");
+			cv::Mat debug_tgt_mesh_wire_img = fs.debugTargetMeshWireframe();
+			cv::imwrite(debug_tgt_mesh_wire_path.string(), debug_tgt_mesh_wire_img);
+		}
 	}
 	catch (std::exception& e)
 	{
