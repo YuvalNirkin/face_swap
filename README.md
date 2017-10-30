@@ -1,6 +1,6 @@
 # End-to-end, automatic face swapping pipeline
-![alt text](https://yuvalnirkin.github.io/assets/img/projects/face_swap/face_swap_samples.jpg "Samples")
-LFW G.W. Bush photos swapped using our method onto very different subjects and images.
+![alt text](https://yuvalnirkin.github.io/assets/img/projects/face_swap/teaser.jpg "Samples")
+The Joker (Heath Ledger) swapped using our method onto very different subjects and images.
 
 [Yuval Nirkin](http://www.nirkin.com/), [Iacopo Masi](http://www-bcf.usc.edu/~iacopoma/), [Anh Tuan Tran](https://sites.google.com/site/anhttranusc/), [Tal Hassner](http://www.openu.ac.il/home/hassner/), and [Gerard Medioni](http://iris.usc.edu/people/medioni/index.html).
 # Overview
