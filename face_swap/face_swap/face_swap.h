@@ -65,6 +65,9 @@ namespace face_swap
 		*/
         bool setTarget(const cv::Mat& img, const cv::Mat& seg = cv::Mat());
 
+		bool setImages(const cv::Mat& src, const cv::Mat& tgt, 
+			const cv::Mat& src_seg = cv::Mat(), const cv::Mat& tgt_seg = cv::Mat());
+
 		/**	Transfer the face from the source image onto the face in the target image.
 		*/
         cv::Mat swap();

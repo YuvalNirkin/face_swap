@@ -271,7 +271,8 @@ int main(int argc, char* argv[])
             // Start measuring time
             timer.start();
 
-            // Set source and target
+			// Set source and target
+			/*
             if (prev_src_path != img_pair.first)
             {
                 if (!fs.setSource(source_img, source_seg))
@@ -294,6 +295,12 @@ int main(int argc, char* argv[])
                 
             prev_src_path = img_pair.first;
             prev_tgt_path = img_pair.second;
+			*/
+			if (!fs.setImages(source_img, target_img, source_seg, target_seg))
+			{
+				logError(log, img_pair, "Failed to find faces in one of the images!", verbose);
+				continue;
+			}
 
             // Do face swap
             rendered_img = fs.swap();
@@ -360,6 +367,18 @@ int main(int argc, char* argv[])
 					(path(curr_output_path).stem() += "_tgt_mesh.ply")).string();
 				face_swap::Mesh::save_ply(fs.getSourceMesh(), src_ply_path);
 				face_swap::Mesh::save_ply(fs.getTargetMesh(), tgt_ply_path);
+			}
+			if (verbose > 4)
+			{
+				// Write projected meshes wireframe
+				string debug_src_mesh_wire_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_src_mesh_wire.jpg")).string();
+				cv::Mat debug_src_mesh_wire_img = fs.debugSourceMeshWireframe();
+				cv::imwrite(debug_src_mesh_wire_path, debug_src_mesh_wire_img);
+				string debug_tgt_mesh_wire_path = (path(output_path) /=
+					(path(curr_output_path).stem() += "_tgt_mesh_wire.jpg")).string();
+				cv::Mat debug_tgt_mesh_wire_img = fs.debugTargetMeshWireframe();
+				cv::imwrite(debug_tgt_mesh_wire_path, debug_tgt_mesh_wire_img);
 			}
         }
 	}

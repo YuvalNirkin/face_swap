@@ -140,6 +140,147 @@ namespace face_swap
         return true;
     }
 
+	void horFlipLandmarks(std::vector<cv::Point>& landmarks, int width)
+	{
+		// Invert X coordinates
+		for (cv::Point& p : landmarks)
+			p.x = width - p.x;
+
+		// Jaw
+		for (int i = 0; i <= 7; ++i)	
+			std::swap(landmarks[i], landmarks[16 - i]);
+
+		// Eyebrows
+		for (int i = 17; i <= 21; ++i)	
+			std::swap(landmarks[i], landmarks[43 - i]);
+
+		// Nose
+		std::swap(landmarks[31], landmarks[35]);
+		std::swap(landmarks[32], landmarks[34]);
+
+		// Eyes
+		std::swap(landmarks[36], landmarks[45]);
+		std::swap(landmarks[37], landmarks[44]);
+		std::swap(landmarks[38], landmarks[43]);
+		std::swap(landmarks[39], landmarks[42]);
+		std::swap(landmarks[40], landmarks[47]);
+		std::swap(landmarks[41], landmarks[46]);
+
+		// Mouth Outer
+		std::swap(landmarks[48], landmarks[54]);
+		std::swap(landmarks[49], landmarks[53]);
+		std::swap(landmarks[50], landmarks[52]);
+		std::swap(landmarks[59], landmarks[55]);
+		std::swap(landmarks[58], landmarks[56]);
+
+		// Mouth inner
+		std::swap(landmarks[60], landmarks[64]);
+		std::swap(landmarks[61], landmarks[63]);
+		std::swap(landmarks[67], landmarks[65]);
+	}
+
+	bool FaceSwap::setImages(const cv::Mat& src, const cv::Mat& tgt,
+		const cv::Mat& src_seg, const cv::Mat& tgt_seg)
+	{
+		m_source_img = src;
+		m_target_img = tgt;
+		m_target_seg = tgt_seg;
+
+		// Preprocess source image
+		std::vector<cv::Point> cropped_src_landmarks;
+		cv::Mat cropped_src, cropped_src_seg;
+		if (!preprocessImages(src, src_seg, m_src_landmarks, cropped_src_landmarks,
+			cropped_src, cropped_src_seg))
+			return false;
+
+		// Preprocess target image
+		std::vector<cv::Point> cropped_tgt_landmarks;
+		cv::Mat cropped_tgt, cropped_tgt_seg;
+		if (!preprocessImages(tgt, tgt_seg, m_tgt_landmarks, cropped_tgt_landmarks,
+			cropped_tgt, cropped_tgt_seg, m_target_bbox))
+			return false;
+
+		// Check if horizontal flip is required
+		float src_angle = sfl::getFaceApproxHorAngle(cropped_src_landmarks);
+		float tgt_angle = sfl::getFaceApproxHorAngle(cropped_tgt_landmarks);
+		if ((src_angle * tgt_angle) < 0 && std::abs(src_angle - tgt_angle) > (CV_PI / 18.0f))
+		{
+			// Horizontal flip the source image
+			cv::flip(cropped_src, cropped_src, 1);
+			if(!cropped_src_seg.empty())
+				cv::flip(cropped_src_seg, cropped_src_seg, 1);
+
+			// Horizontal flip the source landmarks
+			horFlipLandmarks(cropped_src_landmarks, cropped_src.cols);
+		}
+
+		// If source segmentation was not specified and we have a segmentation model then
+		// calculate the segmentation
+		if (cropped_src_seg.empty() && m_face_seg != nullptr)
+			cropped_src_seg = m_face_seg->process(cropped_src);
+
+		// If target segmentation was not specified and we have a segmentation model then
+		// calculate the segmentation
+		if (cropped_tgt_seg.empty() && m_face_seg != nullptr)
+		{
+			cropped_tgt_seg = m_face_seg->process(cropped_tgt);
+			m_target_seg = cv::Mat::zeros(tgt.size(), CV_8U);
+			cropped_tgt_seg.copyTo(m_target_seg(m_target_bbox));
+		}
+
+		m_tgt_cropped_img = cropped_tgt;
+		m_tgt_cropped_seg = cropped_tgt_seg;
+
+		/// Debug ///
+		m_tgt_cropped_landmarks = cropped_tgt_landmarks;
+		/////////////
+
+		// Calculate source coefficients and pose
+		{
+			cv::Mat shape_coefficients, tex_coefficients, expr_coefficients;
+			cv::Mat vecR, vecT, K;
+			m_cnn_3dmm_expr->process(cropped_src, cropped_src_landmarks, shape_coefficients,
+				tex_coefficients, expr_coefficients, vecR, vecT, K);
+
+			// Create source mesh
+			m_src_mesh = m_basel_3dmm->sample(shape_coefficients, tex_coefficients,
+				expr_coefficients);
+
+			// Texture source mesh
+			generateTexture(m_src_mesh, cropped_src, cropped_src_seg, vecR, vecT, K,
+				m_tex, m_uv);
+
+			/// Debug ///
+			m_src_cropped_img = cropped_src;
+			m_src_cropped_seg = cropped_src_seg;
+			m_src_cropped_landmarks = cropped_src_landmarks;
+			m_src_vecR = vecR;
+			m_src_vecT = vecT;
+			m_src_K = K;
+			/////////////
+		}
+		
+		// Calculate target coefficients and pose
+		{
+			cv::Mat shape_coefficients, tex_coefficients, expr_coefficients;
+			m_cnn_3dmm_expr->process(cropped_tgt, cropped_tgt_landmarks, shape_coefficients,
+				tex_coefficients, expr_coefficients, m_vecR, m_vecT, m_K);
+
+			// Create target mesh
+			m_dst_mesh = m_basel_3dmm->sample(shape_coefficients, tex_coefficients,
+				expr_coefficients);
+			m_dst_mesh.tex = m_tex;
+			m_dst_mesh.uv = m_uv;
+		}
+
+		// Initialize renderer
+		m_face_renderer->init(cropped_tgt.cols, cropped_tgt.rows);
+		m_face_renderer->setProjection(m_K.at<float>(4));
+		m_face_renderer->setMesh(m_dst_mesh);
+
+		return true;
+	}
+
     cv::Mat FaceSwap::swap()
     {
         // Render

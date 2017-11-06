@@ -1,6 +1,6 @@
 /* Copyright (c) 2015 USC, IRIS, Computer vision Lab */
 #pragma once
-#include "cv.h"
+//#include "cv.h"
 #include "highgui.h"
 #include "FTModel.h"
 #include "BaselFace.h"

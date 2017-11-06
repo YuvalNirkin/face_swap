@@ -159,10 +159,14 @@ int main(int argc, char* argv[])
 		else fs.setSegmentationModel(seg_model_path, seg_deploy_path);
 
         // Set source and target
+		/*
         if (!fs.setSource(source_img, source_seg))
             throw std::runtime_error("Failed to find faces in source image!");
         if (!fs.setTarget(target_img, target_seg))
             throw std::runtime_error("Failed to find faces in target image!");
+			*/
+		if (!fs.setImages(source_img, target_img, source_seg, target_seg))
+			throw std::runtime_error("Failed to find faces in one of the images!");
 
         // Do face swap
         cv::Mat rendered_img = fs.swap();
