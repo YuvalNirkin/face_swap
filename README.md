@@ -59,7 +59,7 @@ Now run the following commands:
 cd path/to/face_swap/bin
 face_swap_image --cfg test.cfg
 ```
-- For running the segmentation on a list of images, prepare a csv file in which each line contains the paths to a pair of images, separated by a comma. For this example create a file "img_list.csv" like the following:
+- For running the face swap on a list of images, prepare a csv file in which each line contains the paths to a pair of images, separated by a comma. For this example create a file "img_list.csv" like the following:
 ```
 ../data/images/brad_pitt_01.jpg,../data/images/bruce_willis_01.jpg
 ../data/images/bruce_willis_01.jpg,../data/images/brad_pitt_01.jpg
