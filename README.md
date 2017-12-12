@@ -35,7 +35,7 @@ If you find this code useful, please make sure to cite our paper in your work.
 
 ## Usage
 - For using the library's C++ interface, please take a look at the [Doxygen generated documentation](https://yuvalnirkin.github.io/projects/face_swap/).
-- For running the segmentation on a pair of images, it's best to first create a configuration file because of the large number of parameters. For this example create a configuration file "test.cfg" under "bin" in the installation directory with the following parameters:
+- For running the face swap on a pair of images, it's best to first create a configuration file because of the large number of parameters. For this example create a configuration file "test.cfg" under "bin" in the installation directory with the following parameters:
 ```Ini
 landmarks = ../data/shape_predictor_68_face_landmarks.dat       # path to landmarks model file
 model_3dmm_h5 = ../data/BaselFaceModel_mod_wForehead_noEars.h5  # path to 3DMM file (.h5)
