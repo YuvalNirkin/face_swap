@@ -1,5 +1,5 @@
 # End-to-end, automatic face swapping pipeline
-![alt text](https://yuvalnirkin.github.io/assets/img/projects/face_swap/teaser.jpg "Samples")
+![alt text](https://yuvalnirkin.github.io/assets/img/projects/face_swap/joker_teaser.jpg "Samples")
 The Joker (Heath Ledger) swapped using our method onto very different subjects and images.
 
 [Yuval Nirkin](http://www.nirkin.com/), [Iacopo Masi](http://www-bcf.usc.edu/~iacopoma/), [Anh Tuan Tran](https://sites.google.com/site/anhttranusc/), [Tal Hassner](http://www.openu.ac.il/home/hassner/), and [Gerard Medioni](http://iris.usc.edu/people/medioni/index.html).
@@ -34,7 +34,7 @@ If you find this code useful, please make sure to cite our paper in your work.
 - Add face_swap/bin to path.
 
 ## Usage
-- For using the library's C++ interface, please take a look at the [Doxygen generated documentation](https://yuvalnirkin.github.io/projects/face_swap/).
+- For using the library's C++ interface, please take a look at the [Doxygen generated documentation](https://yuvalnirkin.github.io/docs/face_swap/).
 - For running the face swap on a pair of images, it's best to first create a configuration file because of the large number of parameters. For this example create a configuration file "test.cfg" under "bin" in the installation directory with the following parameters:
 ```Ini
 landmarks = ../data/shape_predictor_68_face_landmarks.dat       # path to landmarks model file
