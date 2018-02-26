@@ -77,6 +77,19 @@ face_swap_batch --cfg test.cfg
 ```
 - It's also possible to run on entire image directories. In that case all possible pairs will be processed. Just specify a directory in the input parameter for face_swap_batch.
 
+## Citation
+
+Please cite our paper with the following bibtex if you use our face renderer:
+
+``` latex
+@inproceedings{nirkin2018_faceswap,
+      title={On Face Segmentation, Face Swapping, and Face Perception},
+      booktitle = {IEEE Conference on Automatic Face and Gesture Recognition},
+      author={Nirkin, Yuval and Masi, Iacopo and Tran, Anh Tuan and Hassner, Tal and Medioni, and G\'{e}rard Medioni},
+      year={2018},
+    }
+```
+
 ## Related projects
 - [Deep face segmentation](https://github.com/YuvalNirkin/face_segmentation), used to segment face regions in the face swapping pipeline.
 - [Interactive system for fast face segmentation ground truth labeling](https://github.com/YuvalNirkin/face_video_segment), used to produce the training set for our deep face segmentation.
