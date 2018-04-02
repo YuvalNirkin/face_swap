@@ -85,7 +85,7 @@ Please cite our paper with the following bibtex if you use our face renderer:
 @inproceedings{nirkin2018_faceswap,
       title={On Face Segmentation, Face Swapping, and Face Perception},
       booktitle = {IEEE Conference on Automatic Face and Gesture Recognition},
-      author={Nirkin, Yuval and Masi, Iacopo and Tran, Anh Tuan and Hassner, Tal and Medioni, and G\'{e}rard Medioni},
+      author={Nirkin, Yuval and Masi, Iacopo and Tran, Anh Tuan and Hassner, Tal and Medioni, G\'{e}rard Medioni},
       year={2018},
     }
 ```
