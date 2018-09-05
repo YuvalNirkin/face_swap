@@ -1,7 +1,7 @@
 // std
 #include <iostream>
-#include <fstream>
 #include <exception>
+#include <fstream>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -34,8 +34,8 @@ int main(int argc, char* argv[])
 	string reg_model_path, reg_deploy_path, reg_mean_path;
 	string seg_model_path, seg_deploy_path;
     string cfg_path;
-    bool generic, with_expr, with_gpu, cache;
-    unsigned int gpu_device_id, verbose;
+    bool generic, with_expr, with_gpu;
+    unsigned int gpu_device_id, verbose, iterations;
 	try {
 		options_description desc("Allowed options");
 		desc.add_options()
@@ -54,17 +54,17 @@ int main(int argc, char* argv[])
 			("seg_deploy", value<string>(&seg_deploy_path), "path to face segmentation CNN deploy file (.prototxt)")
             ("generic,g", value<bool>(&generic)->default_value(false), "use generic model without shape regression")
             ("expressions,e", value<bool>(&with_expr)->default_value(true), "with expressions")
-			("cache,c", value<bool>(&cache)->default_value(false), "cache intermediate face data")
 			("gpu", value<bool>(&with_gpu)->default_value(true), "toggle GPU / CPU")
 			("gpu_id", value<unsigned int>(&gpu_device_id)->default_value(0), "GPU's device id")
-            ("cfg", value<string>(&cfg_path)->default_value("face_swap_image.cfg"), "configuration file (.cfg)")
+			("iterations,n", value<unsigned int>(&iterations)->default_value(10), "number of face swap iterations")
+            ("cfg", value<string>(&cfg_path)->default_value("test_memory.cfg"), "configuration file (.cfg)")
 			;
 		variables_map vm;
 		store(command_line_parser(argc, argv).options(desc).
 			positional(positional_options_description().add("input", -1)).run(), vm);
 
         if (vm.count("help")) {
-            cout << "Usage: face_swap_image [options]" << endl;
+            cout << "Usage: test_memory [options]" << endl;
             cout << desc << endl;
             exit(0);
         }
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 
 	try
 	{
-        // Initialize face swap
+		// Initialize face swap
 		std::shared_ptr<face_swap::FaceSwapEngine> fs =
 			face_swap::FaceSwapEngine::createInstance(
 				landmarks_path, model_3dmm_h5_path, model_3dmm_dat_path, reg_model_path,
@@ -109,8 +109,6 @@ int main(int argc, char* argv[])
 				generic, with_expr, with_gpu, gpu_device_id);
 
         // Read source and target images
-        //cv::Mat source_img = cv::imread(input_paths[0]);
-        //cv::Mat target_img = cv::imread(input_paths[1]);
 		face_swap::FaceData src_data, tgt_data;
 		readFaceData(input_paths[0], src_data);
 		readFaceData(input_paths[1], tgt_data);
@@ -126,71 +124,15 @@ int main(int argc, char* argv[])
 		}
 		//else fs.setSegmentationModel(seg_model_path, seg_deploy_path);
 
-        // Set source and target
-		/*if (!fs.setImages(source_img, target_img, source_seg, target_seg))
-			throw std::runtime_error("Failed to find faces in one of the images!");*/
-
-        // Do face swap
-        //cv::Mat rendered_img = fs.swap();
-		//face_swap::FaceData src_data, tgt_data;
-		//src_data.img = source_img;
-		src_data.seg = source_seg;
-		//tgt_data.img = target_img;
-		tgt_data.seg = target_seg;
-		std::cout << "Processing source image..." << std::endl;
-		fs->process(src_data);
-		std::cout << "Processing target image..." << std::endl;
-		fs->process(tgt_data);
-		std::cout << "Swapping images..." << std::endl;
-		cv::Mat rendered_img = fs->swap( src_data, tgt_data);
-        if (rendered_img.empty())
-            throw std::runtime_error("Face swap failed!");
-
-        // Write output to file
-        path out_file_path = output_path;
-		path out_dir_path = output_path;
-        if (is_directory(output_path))
-        {
-            path outputName = (path(input_paths[0]).stem() += "_") += 
-                (path(input_paths[1]).stem() += ".jpg");
-			out_file_path = path(output_path) /= outputName;
-        }
-		else out_dir_path = path(output_path).parent_path();
-        cv::imwrite(out_file_path.string(), rendered_img);
-
-		// Write cache
-		if (cache)
+		for (unsigned int i = 0; i < iterations; ++i)
 		{
-			writeFaceData(input_paths[0], src_data);
-			writeFaceData(input_paths[1], tgt_data);
+			std::cout << "Running iteration " << i << "..." << std::endl;
+
+			// Do face swap
+			cv::Mat rendered_img = fs->swap(src_data, tgt_data);
+			if (rendered_img.empty())
+				throw std::runtime_error("Face swap failed!");
 		}
-
-		// Debug
-		if (verbose > 0)
-		{
-			// Write rendered image
-			path debug_render_path = out_dir_path /
-				(out_file_path.stem() += "_debug.jpg");
-
-			cv::Mat src_render = fs->renderFaceData(src_data);
-			cv::Mat tgt_render = fs->renderFaceData(tgt_data);
-			cv::Mat debug_render_img;
-			int width = std::min(src_render.cols, tgt_render.cols);
-			if (src_render.cols > width)
-			{
-				int height = (int)std::round(src_render.rows * (float(width) / src_render.cols));
-				cv::resize(src_render, src_render, cv::Size(width, height));
-			}
-			else
-			{
-				int height = (int)std::round(tgt_render.rows * (float(width) / tgt_render.cols));
-				cv::resize(tgt_render, tgt_render, cv::Size(width, height));
-			}
-			cv::vconcat(src_render, tgt_render, debug_render_img);
-
-			cv::imwrite(debug_render_path.string(), debug_render_img);
-		}
-		
 	}
 	catch (std::exception& e)
 	{

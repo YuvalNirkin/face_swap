@@ -1,7 +1,7 @@
 // std
 #include <iostream>
-#include <fstream>
 #include <exception>
+#include <fstream>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -15,7 +15,6 @@
 
 // face_swap
 #include <face_swap/face_swap_engine.h>
-#include <face_swap/utilities.h>
 
 using std::cout;
 using std::endl;
@@ -28,22 +27,22 @@ using namespace boost::filesystem;
 int main(int argc, char* argv[])
 {
 	// Parse command line arguments
-    std::vector<string> input_paths, seg_paths;
+	string input_path, seg_path;
 	string output_path, landmarks_path;
 	string model_3dmm_h5_path, model_3dmm_dat_path;
 	string reg_model_path, reg_deploy_path, reg_mean_path;
 	string seg_model_path, seg_deploy_path;
     string cfg_path;
-    bool generic, with_expr, with_gpu, cache;
-    unsigned int gpu_device_id, verbose;
+    bool generic, with_expr, with_gpu;
+    unsigned int gpu_device_id, verbose, pyramid_num;
 	try {
 		options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "display the help message")
             ("verbose,v", value<unsigned int>(&verbose)->default_value(0), "output debug information [0, 4]")
-			("input,i", value<std::vector<string>>(&input_paths)->required(), "image paths [source target]")
+			("input,i", value<string>(&input_path)->required(), "image path")
 			("output,o", value<string>(&output_path)->required(), "output path")
-            ("segmentations,s", value<std::vector<string>>(&seg_paths), "segmentation paths [source target]")
+            ("segmentation,s", value<string>(&seg_path), "segmentation path")
 			("landmarks,l", value<string>(&landmarks_path)->required(), "path to landmarks model file")
             ("model_3dmm_h5", value<string>(&model_3dmm_h5_path)->required(), "path to 3DMM file (.h5)")
             ("model_3dmm_dat", value<string>(&model_3dmm_dat_path)->required(), "path to 3DMM file (.dat)")
@@ -54,17 +53,17 @@ int main(int argc, char* argv[])
 			("seg_deploy", value<string>(&seg_deploy_path), "path to face segmentation CNN deploy file (.prototxt)")
             ("generic,g", value<bool>(&generic)->default_value(false), "use generic model without shape regression")
             ("expressions,e", value<bool>(&with_expr)->default_value(true), "with expressions")
-			("cache,c", value<bool>(&cache)->default_value(false), "cache intermediate face data")
 			("gpu", value<bool>(&with_gpu)->default_value(true), "toggle GPU / CPU")
 			("gpu_id", value<unsigned int>(&gpu_device_id)->default_value(0), "GPU's device id")
-            ("cfg", value<string>(&cfg_path)->default_value("face_swap_image.cfg"), "configuration file (.cfg)")
+			("pyramids,p", value<unsigned int>(&pyramid_num)->default_value(4), "number of pyramids")
+            ("cfg", value<string>(&cfg_path)->default_value("test_resolution.cfg"), "configuration file (.cfg)")
 			;
 		variables_map vm;
 		store(command_line_parser(argc, argv).options(desc).
 			positional(positional_options_description().add("input", -1)).run(), vm);
 
         if (vm.count("help")) {
-            cout << "Usage: face_swap_image [options]" << endl;
+            cout << "Usage: test_resolution [options]" << endl;
             cout << desc << endl;
             exit(0);
         }
@@ -74,14 +73,9 @@ int main(int argc, char* argv[])
         store(parse_config_file(ifs, desc), vm);
 
         notify(vm);
-
-        if(input_paths.size() != 2) throw error("Both source and target must be specified in input!");
-        if (!is_regular_file(input_paths[0])) throw error("source input must be a path to an image!");
-        if (!is_regular_file(input_paths[1])) throw error("target input target must be a path to an image!");
-        if (seg_paths.size() > 0 && !is_regular_file(seg_paths[0]))
-            throw error("source segmentation must be a path to an image!");
-        if (seg_paths.size() > 1 && !is_regular_file(seg_paths[1]))
-            throw error("target segmentation must be a path to an image!");
+		if (!is_regular_file(input_path)) throw error("input must be a path to an image!");
+		if (!seg_path.empty() && !is_regular_file(seg_path))
+			throw error("segmentation must be a path to a file!");
 		if (!is_regular_file(landmarks_path)) throw error("landmarks must be a path to a file!");
         if (!is_regular_file(model_3dmm_h5_path)) throw error("model_3dmm_h5 must be a path to a file!");
         if (!is_regular_file(model_3dmm_dat_path)) throw error("model_3dmm_dat must be a path to a file!");
@@ -102,95 +96,62 @@ int main(int argc, char* argv[])
 	try
 	{
         // Initialize face swap
-		std::shared_ptr<face_swap::FaceSwapEngine> fs =
+		std::shared_ptr<face_swap::FaceSwapEngine> fs = 
 			face_swap::FaceSwapEngine::createInstance(
 				landmarks_path, model_3dmm_h5_path, model_3dmm_dat_path, reg_model_path,
 				reg_deploy_path, reg_mean_path, seg_model_path, seg_deploy_path,
 				generic, with_expr, with_gpu, gpu_device_id);
 
-        // Read source and target images
-        //cv::Mat source_img = cv::imread(input_paths[0]);
-        //cv::Mat target_img = cv::imread(input_paths[1]);
-		face_swap::FaceData src_data, tgt_data;
-		readFaceData(input_paths[0], src_data);
-		readFaceData(input_paths[1], tgt_data);
+        // Read input image
+        cv::Mat img = cv::imread(input_path);
 
-        // Read source and target segmentations or initialize segmentation model
-        cv::Mat source_seg, target_seg;
+        // Read segmentation or initialize segmentation model
+        cv::Mat seg;
 		if (seg_model_path.empty() || seg_deploy_path.empty())
 		{
-			if (seg_paths.size() > 0) 
-				source_seg = cv::imread(seg_paths[0], cv::IMREAD_GRAYSCALE);
-			if (seg_paths.size() > 1) 
-				target_seg = cv::imread(seg_paths[1], cv::IMREAD_GRAYSCALE);
-		}
-		//else fs.setSegmentationModel(seg_model_path, seg_deploy_path);
-
-        // Set source and target
-		/*if (!fs.setImages(source_img, target_img, source_seg, target_seg))
-			throw std::runtime_error("Failed to find faces in one of the images!");*/
-
-        // Do face swap
-        //cv::Mat rendered_img = fs.swap();
-		//face_swap::FaceData src_data, tgt_data;
-		//src_data.img = source_img;
-		src_data.seg = source_seg;
-		//tgt_data.img = target_img;
-		tgt_data.seg = target_seg;
-		std::cout << "Processing source image..." << std::endl;
-		fs->process(src_data);
-		std::cout << "Processing target image..." << std::endl;
-		fs->process(tgt_data);
-		std::cout << "Swapping images..." << std::endl;
-		cv::Mat rendered_img = fs->swap( src_data, tgt_data);
-        if (rendered_img.empty())
-            throw std::runtime_error("Face swap failed!");
-
-        // Write output to file
-        path out_file_path = output_path;
-		path out_dir_path = output_path;
-        if (is_directory(output_path))
-        {
-            path outputName = (path(input_paths[0]).stem() += "_") += 
-                (path(input_paths[1]).stem() += ".jpg");
-			out_file_path = path(output_path) /= outputName;
-        }
-		else out_dir_path = path(output_path).parent_path();
-        cv::imwrite(out_file_path.string(), rendered_img);
-
-		// Write cache
-		if (cache)
-		{
-			writeFaceData(input_paths[0], src_data);
-			writeFaceData(input_paths[1], tgt_data);
+			if(!seg_path.empty())
+				seg = cv::imread(seg_path, cv::IMREAD_GRAYSCALE);
 		}
 
-		// Debug
-		if (verbose > 0)
+		// Generate image pyramids
+		std::vector<cv::Mat> pyramids(pyramid_num);
+		pyramids[0] = img;
+		for (int i = 1; i < pyramid_num; ++i)
+			cv::pyrDown(pyramids[i - 1], pyramids[i]);
+
+		// Process image pyramids
+		std::vector<cv::Mat> rendered_pyramids(pyramid_num);
+		std::vector<face_swap::FaceData> pyramids_data(pyramid_num);
+		for (int i = 0; i < pyramid_num; ++i)
 		{
-			// Write rendered image
-			path debug_render_path = out_dir_path /
-				(out_file_path.stem() += "_debug.jpg");
+			std::cout << "Prcoessing pyramid " << i << "..." << std::endl;
+			pyramids_data[i].img = pyramids[i];
+			fs->process(pyramids_data[i]);
+			rendered_pyramids[i] = fs->renderFaceData(pyramids_data[i], 1 << i);
+		}
 
-			cv::Mat src_render = fs->renderFaceData(src_data);
-			cv::Mat tgt_render = fs->renderFaceData(tgt_data);
-			cv::Mat debug_render_img;
-			int width = std::min(src_render.cols, tgt_render.cols);
-			if (src_render.cols > width)
-			{
-				int height = (int)std::round(src_render.rows * (float(width) / src_render.cols));
-				cv::resize(src_render, src_render, cv::Size(width, height));
-			}
-			else
-			{
-				int height = (int)std::round(tgt_render.rows * (float(width) / tgt_render.cols));
-				cv::resize(tgt_render, tgt_render, cv::Size(width, height));
-			}
-			cv::vconcat(src_render, tgt_render, debug_render_img);
-
-			cv::imwrite(debug_render_path.string(), debug_render_img);
+		// Concatenate rendered pyramid to a single image
+		cv::Mat rendered_img = rendered_pyramids[0];
+		std::string text = std::to_string(pyramids_data[0].bbox.width) + " X " + std::to_string(pyramids_data[0].bbox.height);
+		cv::putText(rendered_pyramids[0], text, cv::Point(10, rendered_pyramids[0].rows - 10), cv::FONT_HERSHEY_PLAIN, 10, cv::Scalar(0, 255, 0), 10);
+		for (int i = 1; i < pyramid_num; ++i)
+		{
+			cv::resize(rendered_pyramids[i], rendered_pyramids[i], rendered_pyramids[i - 1].size());
+			std::string text = std::to_string(pyramids_data[i].bbox.width) + " X " + std::to_string(pyramids_data[i].bbox.height);
+			cv::putText(rendered_pyramids[i], text, cv::Point(10, rendered_pyramids[0].rows - 10), cv::FONT_HERSHEY_PLAIN, 10, cv::Scalar(0, 255, 0), 10);
+			cv::vconcat(rendered_img, rendered_pyramids[i], rendered_img);
 		}
 		
+		// Write output to file
+		path out_file_path = output_path;
+		path out_dir_path = output_path;
+		if (is_directory(output_path))
+		{
+			path outputName = (path(input_path).stem() += ".jpg");
+			out_file_path = path(output_path) /= outputName;
+		}
+		else out_dir_path = path(output_path).parent_path();
+		cv::imwrite(out_file_path.string(), rendered_img);
 	}
 	catch (std::exception& e)
 	{

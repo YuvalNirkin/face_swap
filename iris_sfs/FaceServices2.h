@@ -2,13 +2,9 @@
 #pragma once
 #include "cv.h"
 #include "highgui.h"
-#include "FImRenderer.h"
 #include "BaselFaceEstimator.h"
-#include "RenderModel.h"
 #include <Eigen/Sparse>
-
-//using namespace std;
-//using namespace cv;
+#include <Eigen/Dense>
 
 #define NUM_EXTRA_FEATURES 1
 #define FEATURES_LANDMARK	  0
@@ -18,6 +14,27 @@
 typedef Eigen::SparseMatrix<double> SpMat; // declares a column-major sparse matrix type of double
 typedef Eigen::Triplet<double> SpT;
 typedef std::vector<std::pair<int, double> > IndWeight;
+
+#define RENDER_PARAMS_COUNT 21
+
+#define RENDER_PARAMS_R 0
+#define RENDER_PARAMS_T 3
+#define RENDER_PARAMS_AMBIENT	6
+#define RENDER_PARAMS_DIFFUSE	9
+#define RENDER_PARAMS_LDIR		12
+#define RENDER_PARAMS_CONTRAST	14
+#define RENDER_PARAMS_GAIN		15
+#define RENDER_PARAMS_OFFSET	18
+#define RENDER_PARAMS_SPECULAR	21
+#define RENDER_PARAMS_SHINENESS	24
+
+#define RENDER_PARAMS_AMBIENT_DEFAULT	0.5f
+#define RENDER_PARAMS_DIFFUSE_DEFAULT	0.5f
+#define RENDER_PARAMS_CONTRAST_DEFAULT	1.0f
+#define RENDER_PARAMS_GAIN_DEFAULT		1.0f
+#define RENDER_PARAMS_OFFSET_DEFAULT	0.0f
+#define RENDER_PARAMS_SPECULAR_DEFAULT	80.0f
+#define RENDER_PARAMS_SHINENESS_DEFAULT	16.0f
 
 typedef struct BFMParams {
 	float sI;
@@ -100,10 +117,8 @@ typedef struct BFMParams {
 class FaceServices2
 {
 	float _k[9];
-	FImRenderer* im_render = nullptr;   // Yuval
 	cv::Mat faces, shape, tex;
 	BaselFaceEstimator festimator;
-	RenderServices rs;
 	
 	float prevEF;
 	float cEF;
@@ -117,8 +132,6 @@ public:
 	FaceServices2(void);
 	void setUp(int w, int h, float f);
     void init(int w, int h, float f = 1000.0f); // Yuval
-	bool projectCheckVis(FImRenderer* imRen, cv::Mat shape, float* r, float *t, cv::Mat refDepth, bool* &visible);
-	std::vector<cv::Point2f> projectCheckVis2(FImRenderer* imRen, cv::Mat shape, float* r, float *t, cv::Mat refDepth, bool* &visible);
 	float updateHessianMatrix(bool part, cv::Mat alpha, float* renderParams, cv::Mat faces, cv::Mat colorIm,std::vector<int> lmInds, cv::Mat landIm, BFMParams &params, cv::Mat &prevR, cv::Mat &prevT, cv::Mat exprW = cv::Mat() );
 	cv::Mat computeGradient(bool part, cv::Mat alpha, float* renderParams, cv::Mat faces,cv::Mat colorIm,std::vector<int> lmInds, cv::Mat landIm, BFMParams &params,std::vector<int> &inds, cv::Mat exprW, cv::Mat &prevR, cv::Mat &prevT);
 	void sno_step2(bool part, cv::Mat &alpha, float* renderParams, cv::Mat faces,cv::Mat colorIm,std::vector<int> lmInds, cv::Mat landIm, BFMParams &params, cv::Mat &exprW, cv::Mat &prevR, cv::Mat &prevT);
@@ -126,7 +139,6 @@ public:
 	float computeCost(float vEF, cv::Mat &alpha, float* renderParams, BFMParams &params, cv::Mat &exprW, cv::Mat &prevR, cv::Mat &prevT );
 	
 	float eF(bool part, cv::Mat alpha, std::vector<int> inds, cv::Mat landIm, float* renderParams, cv::Mat exprW);
-	void renderFace(char* fname, cv::Mat colorIm, cv::Mat landIm,bool part, cv::Mat alpha, cv::Mat beta,cv::Mat faces, float* renderParams, cv::Mat exprW );
 	bool loadReference(std::string refDir, std::string model_file, cv::Mat &alpha, cv::Mat &beta, float* renderParams, int &M, cv::Mat &exprW, int &EM);
 	bool loadReference2(std::string refDir, std::string model_file, cv::Mat &alpha, cv::Mat &beta, int &M);
 	
@@ -137,9 +149,6 @@ public:
 	bool estimatePoseExpr(cv::Mat colorIm, cv::Mat lms, cv::Mat alpha, cv::Mat &vecR, cv::Mat &vecT, cv::Mat& K, cv::Mat &exprWeightse, const char* outputDir, bool with_expr = true);
 	bool updatePoseExpr(cv::Mat colorIm, cv::Mat lms, cv::Mat alpha, cv::Mat &vecR, cv::Mat &vecT, cv::Mat &exprWeightse, char* outputDir, cv::Mat &prevR, cv::Mat &prevT);
 
-	cv::Mat testRender(cv::Mat colorIm, cv::Mat alpha, cv::Mat r, cv::Mat t, cv::Mat exprW, char* outDir, bool updateColor = false);
-        void testRenderWDepth(cv::Mat colorIm, cv::Mat alpha, cv::Mat r, cv::Mat t, cv::Mat exprW, cv::Mat &out, cv::Mat &refDepth);
-	cv::Mat renderFaceGray(char* fname, cv::Mat colorIm, cv::Mat alpha,cv::Mat faces, float* renderParams, cv::Mat exprW );
 	void nextMotion(int &currFrame, cv::Mat &vecR, cv::Mat &vecT, cv::Mat &exprWeights);
 };
 

@@ -4,9 +4,6 @@ SET(IRIS_SFS_SOURCE
     epnp.cpp
     BaselFace.cpp
     BaselFaceEstimator.cpp
-    FTModel.cpp
-    FImRenderer.cpp
-    RenderModel.cpp
     FaceServices2.cpp
 )
 
@@ -15,21 +12,17 @@ SET(IRIS_SFS_HEADERS
     epnp.h
     BaselFace.h
     BaselFaceEstimator.h
-    FTModel.h
-    FImRenderer.h
-    RenderModel.h
     FaceServices2.h
 )
 
 # Target
-add_library(iris_sfs ${IRIS_SFS_SOURCE} ${IRIS_SFS_HEADERS})
+add_library(iris_sfs STATIC ${IRIS_SFS_SOURCE} ${IRIS_SFS_HEADERS})
 target_include_directories(iris_sfs PUBLIC 
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 	${OpenCV_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIR}
 )
 target_link_libraries(iris_sfs PUBLIC
-	cv_gl
 	${OpenCV_LIBS}
 )
 

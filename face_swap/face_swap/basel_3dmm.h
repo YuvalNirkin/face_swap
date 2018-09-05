@@ -1,6 +1,8 @@
 #ifndef FACE_SWAP_BASEL_3DMM_H
 #define FACE_SWAP_BASEL_3DMM_H
 
+#include "face_swap/face_swap_export.h"
+
 // Includes
 #include <opencv2/core.hpp>
 
@@ -10,7 +12,7 @@ namespace face_swap
 {
 	/** Represents a 3D renderable shape.
 	*/
-    struct Mesh
+    struct FACE_SWAP_EXPORT Mesh
     {
 		/**	Save mesh to a ply file.
 		@param mesh The mesh to write to file.

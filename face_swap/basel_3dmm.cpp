@@ -113,8 +113,8 @@ namespace face_swap
         return mesh;
     }
 
-    Mesh Basel3DMM::sample(const cv::Mat & shape_coefficients,
-        const cv::Mat & tex_coefficients, const cv::Mat & expr_coefficients)
+    Mesh Basel3DMM::sample(const cv::Mat& shape_coefficients,
+        const cv::Mat& tex_coefficients, const cv::Mat& expr_coefficients)
     {
         Mesh mesh;
         mesh.faces = faces;

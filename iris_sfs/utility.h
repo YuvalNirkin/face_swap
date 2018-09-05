@@ -36,7 +36,7 @@ void write_ply(char* outname, cv::Mat mat_Depth, cv::Mat mat_Faces);
 void write_ply(char* outname, cv::Mat mat_Depth, cv::Mat mat_Color, cv::Mat mat_Faces);
 void write_ply(char* outname, cv::Mat mat_Depth,std::vector<cv::Vec3b> colors,cv::Mat faces);
 
-void write_ply(char* outname, bool* visible, cv::Mat mat_Depth,std::vector<cv::Vec3b> colors,cv::Mat faces);
+//void write_ply(char* outname, bool* visible, cv::Mat mat_Depth,std::vector<cv::Vec3b> colors,cv::Mat faces);
 void write_ply(char* outname, int count, bool* visible, float* points_);
 void write_ply(char* outname, int count, float* points_);
 void write_plyF(char* outname, cv::Mat mat_Depth,std::vector<cv::Vec3b> colors,int nFaces, unsigned* faces);

@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.4)
 project(face_swap)
 
 # Set version
-set(FACE_SWAP_MAJOR_VERSION 0)
-set(FACE_SWAP_MINOR_VERSION 9)
+set(FACE_SWAP_MAJOR_VERSION 1)
+set(FACE_SWAP_MINOR_VERSION 0)
 set(FACE_SWAP_PATCH_VERSION 0)
 set(FACE_SWAP_VERSION ${FACE_SWAP_MAJOR_VERSION}.${FACE_SWAP_MINOR_VERSION}.${FACE_SWAP_PATCH_VERSION})
 
@@ -24,14 +24,29 @@ set(CMAKE_DEBUG_POSTFIX "_d" CACHE STRING
 	"Add a custom \"postfix\" to static and shared libraries when in Debug build")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Set build output directories
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 # Optional 3rd party components
 # ===================================================
 option(WITH_BOOST_STATIC "Boost static libraries" ON)
-option(WITH_QT "Qt" ON)
+option(WITH_PROTOBUF "Protocol Buffers - Google's data interchange format" ON)
 
 # Build components
 # ===================================================
+option(BUILD_APPS "Build applications" ON)
+option(BUILD_SHARED_LIBS "Build Shared Libraries" OFF)
 option(BUILD_DOCS "Build documentation using Doxygen" ON)
+option(BUILD_INTERFACE_PYTHON "Build interface for Python" ON)
+option(BUILD_TESTS "Build tests" ON)
+
+# Set library type
+set(LIB_TYPE STATIC)
+if(BUILD_SHARED_LIBS)
+	set(LIB_TYPE SHARED)
+endif(BUILD_SHARED_LIBS)
 
 # Find dependencies
 # ===================================================
@@ -46,27 +61,16 @@ if(WIN32)
 		add_definitions(-DBOOST_ALL_DYN_LINK)
 	endif()
 endif()
-find_package(Boost REQUIRED filesystem program_options regex timer)
+find_package(Boost REQUIRED filesystem program_options regex timer thread chrono)
 
 # OpenCV
 find_package(OpenCV REQUIRED highgui imgproc imgcodecs calib3d photo)
-
-# sfl
-find_package(find_face_landmarks REQUIRED)
-
-# face_segmentation
-find_package(face_segmentation REQUIRED)
 
 # dlib
 find_package(dlib REQUIRED)
 
 # Caffe
 find_package(Caffe REQUIRED)
-
-# Qt
-if(WITH_QT)
-	find_package(Qt5Widgets)
-endif()
 
 # HDF5
 if(MSVC)
@@ -78,42 +82,53 @@ if(MSVC)
   set(HDF5_LIBRARIES hdf5-shared hdf5_cpp-shared)
   set(HDF5_HL_LIBRARIES hdf5_hl-shared)
 else()
-  find_package(HDF5 COMPONENTS HL REQUIRED)
+  #find_package(HDF5 COMPONENTS HL REQUIRED)
+  find_package(HDF5 COMPONENTS C CXX HL REQUIRED)
 endif()
-find_package(HDF5 REQUIRED CXX)
+#find_package(HDF5 REQUIRED CXX)
 
 # Eigen
 find_package(Eigen3 REQUIRED)
 
-# OpenGL
-find_package(OpenGL REQUIRED)
-
-# GLEW
-find_package(GLEW REQUIRED)
+# protobuf
+if(WITH_PROTOBUF)
+	find_package(Protobuf)
+endif()
 
 # Doxygen
 find_package(Doxygen)
 
-# Interfaces
+# SWIG
+find_package(SWIG)
 
 # Add sub-directories
 # ===================================================
-add_subdirectory(cv_gl)
 add_subdirectory(iris_sfs)
 add_subdirectory(face_swap)
-add_subdirectory(face_swap_image)
-add_subdirectory(face_swap_batch)
+if(BUILD_APPS)
+  add_subdirectory(face_swap_image)
+  add_subdirectory(face_swap_batch)
+  add_subdirectory(face_swap_single2many)
+endif(BUILD_APPS)
+if(BUILD_TESTS)
+  add_subdirectory(tests)
+endif(BUILD_TESTS)
 
 # Documentation
 if(BUILD_DOCS)
 	add_subdirectory(doc)
 endif()
 
+# Interfaces
+if(BUILD_INTERFACE_PYTHON)
+	add_subdirectory(interfaces/python)
+endif()
+
 # Export configuration
 # ===================================================
 
 # Add all targets to the build-tree export set
-set(FACE_SWAP_TARGETS face_swap iris_sfs cv_gl)
+set(FACE_SWAP_TARGETS face_swap iris_sfs)
 export(TARGETS ${FACE_SWAP_TARGETS}
   FILE "${PROJECT_BINARY_DIR}/face_swap-targets.cmake")
   

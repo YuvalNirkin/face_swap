@@ -1,7 +1,7 @@
 // std
 #include <iostream>
-#include <fstream>
 #include <exception>
+#include <fstream>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -17,8 +17,6 @@
 
 // face_swap
 #include <face_swap/face_swap_engine.h>
-#include <face_swap/utilities.h>
-#include <face_swap/render_utilities.h>
 
 using std::cout;
 using std::endl;
@@ -67,19 +65,6 @@ void getImagesFromDir(const std::string& dir_path, std::vector<std::string>& img
     }
 }
 
-void readImagePairsFromFile(const std::string& csv_file,
-    std::vector<std::pair<string, string>>& out)
-{
-    std::ifstream file(csv_file);
-    std::pair<string, string> img_pair;
-    while (file.good())
-    {
-        std::getline(file, img_pair.first, ',');
-        std::getline(file, img_pair.second, '\n');
-        if (img_pair.first.empty() || img_pair.second.empty()) return;
-        out.push_back(img_pair);
-    }
-}
 
 void logError(std::ofstream& log, const std::pair<string, string>& img_pair, 
     const string& msg, bool write_to_file = true)
@@ -92,6 +77,116 @@ void logError(std::ofstream& log, const std::pair<string, string>& img_pair,
     } 
 }
 
+cv::Mat pyramidsTest(std::shared_ptr<face_swap::FaceSwapEngine>& fs,
+	const cv::Mat& img, unsigned int pyramid_num = 4)
+{
+	// Generate image pyramids
+	std::vector<cv::Mat> pyramids(pyramid_num);
+	pyramids[0] = img;
+	for (int i = 1; i < pyramid_num; ++i)
+		cv::pyrDown(pyramids[i - 1], pyramids[i]);
+
+	// Process image pyramids
+	std::vector<cv::Mat> rendered_pyramids(pyramid_num);
+	std::vector<face_swap::FaceData> pyramids_data(pyramid_num);
+	for (int i = 0; i < pyramid_num; ++i)
+	{
+		std::cout << "Prcoessing pyramid " << i << "..." << std::endl;
+		pyramids_data[i].img = pyramids[i];
+		fs->process(pyramids_data[i]);
+		rendered_pyramids[i] = fs->renderFaceData(pyramids_data[i], 1 << i);
+	}
+
+	// Concatenate rendered pyramid to a single image
+	cv::Mat rendered_img = rendered_pyramids[0];
+	std::string text = std::to_string(pyramids_data[0].bbox.width) + " X " + std::to_string(pyramids_data[0].bbox.height);
+	cv::putText(rendered_pyramids[0], text, cv::Point(10, rendered_pyramids[0].rows - 10), cv::FONT_HERSHEY_PLAIN, 10, cv::Scalar(0, 255, 0), 10);
+	for (int i = 1; i < pyramid_num; ++i)
+	{
+		cv::resize(rendered_pyramids[i], rendered_pyramids[i], rendered_pyramids[i - 1].size());
+		std::string text = std::to_string(pyramids_data[i].bbox.width) + " X " + std::to_string(pyramids_data[i].bbox.height);
+		cv::putText(rendered_pyramids[i], text, cv::Point(10, rendered_pyramids[0].rows - 10), cv::FONT_HERSHEY_PLAIN, 10, cv::Scalar(0, 255, 0), 10);
+		cv::vconcat(rendered_img, rendered_pyramids[i], rendered_img);
+	}
+
+	return rendered_img;
+}
+
+//cv::Mat resolutionsTest(std::shared_ptr<face_swap::FaceSwapEngine>& fs,
+//	const cv::Mat& img, const std::vector<unsigned int>& resolutions,
+//	unsigned int pyramid_num = 4)
+//{
+//	// Generate image pyramids
+//	std::vector<cv::Mat> pyramids(pyramid_num);
+//	pyramids[0] = img;
+//	for (int i = 1; i < pyramid_num; ++i)
+//		cv::pyrDown(pyramids[i - 1], pyramids[i]);
+//
+//	// Find initial resolution where a face is detected
+//	std::vector<face_swap::FaceData> pyramids_data(pyramid_num);
+//	cv::Mat initial_img;
+//	face_swap::FaceData initial_img_data;
+//	for (int i = 0; i < pyramid_num; ++i)
+//	{
+//		std::cout << "Prcoessing pyramid " << i << "..." << std::endl;
+//		fs->process(pyramids[i], pyramids_data[i]);
+//		if (pyramids_data[i].landmarks.empty()) continue;
+//		initial_img = pyramids[i];
+//		initial_img_data = pyramids_data[i];
+//		break;
+//	}
+//
+//	// Check that a face was actually found
+//	if (initial_img_data.landmarks.empty())
+//		return fs->renderFaceData(img, initial_img_data);
+//
+//	// Sort resolutions in descending order
+//	std::vector<unsigned int> resolutions_sorted = resolutions;
+//	std::sort(resolutions_sorted.begin(), resolutions_sorted.end(), std::greater<unsigned int>());
+//
+//	// Remove resolutions that are greater than the initial image
+//	resolutions_sorted.erase(std::remove_if(resolutions_sorted.begin(), resolutions_sorted.end(),
+//		[initial_img_data](const int& x) { return x > initial_img_data.bbox.width; }),
+//		resolutions_sorted.end());
+//
+//	// Render image pyramids by specified resolutions
+//	std::vector<cv::Mat> rendered_pyramids(resolutions_sorted.size());
+//	std::vector<face_swap::FaceData> res_pyramids_data(resolutions_sorted.size());
+//	for(int i = 0; i < resolutions_sorted.size(); ++i)
+//	{
+//		std::cout << "Prcoessing resolution pyramid " << i << "..." << std::endl;
+//		int res = resolutions_sorted[i];
+//		float scale = float(res) / float(initial_img_data.bbox.width);
+//		cv::Mat temp;
+//		
+//		//cv::resize(initial_img, temp, cv::Size(), scale, scale, cv::INTER_CUBIC);
+//		cv::Size target_size((int)std::round(initial_img.cols*scale), (int)std::round(initial_img.rows*scale));
+//		for (int j = 0; j < pyramids.size(); ++j)
+//		{
+//			if (pyramids[j].cols < target_size.width) continue;
+//			cv::resize(pyramids[j], temp, target_size, 0.0, 0.0, cv::INTER_CUBIC);
+//			break;
+//		}
+//
+//		fs->process(temp, res_pyramids_data[i]);
+//		rendered_pyramids[i] = fs->renderFaceData(temp, res_pyramids_data[i], 1.0f / scale);
+//	}
+//
+//	// Concatenate rendered pyramid to a single image
+//	cv::Mat rendered_img = rendered_pyramids[0];
+//	std::string text = std::to_string(res_pyramids_data[0].bbox.width) + " X " + std::to_string(res_pyramids_data[0].bbox.height);
+//	cv::putText(rendered_pyramids[0], text, cv::Point(10, rendered_pyramids[0].rows - 10), cv::FONT_HERSHEY_PLAIN, 10, cv::Scalar(0, 255, 0), 10);
+//	for (int i = 1; i < rendered_pyramids.size(); ++i)
+//	{
+//		cv::resize(rendered_pyramids[i], rendered_pyramids[i], rendered_pyramids[i - 1].size(), cv::INTER_CUBIC);
+//		std::string text = std::to_string(res_pyramids_data[i].bbox.width) + " X " + std::to_string(res_pyramids_data[i].bbox.height);
+//		cv::putText(rendered_pyramids[i], text, cv::Point(10, rendered_pyramids[0].rows - 10), cv::FONT_HERSHEY_PLAIN, 10, cv::Scalar(0, 255, 0), 10);
+//		cv::vconcat(rendered_img, rendered_pyramids[i], rendered_img);
+//	}
+//
+//	return rendered_img;
+//}
+
 int main(int argc, char* argv[])
 {
 	// Parse command line arguments
@@ -101,7 +196,8 @@ int main(int argc, char* argv[])
 	string seg_model_path, seg_deploy_path;
     string log_path, cfg_path;
     bool generic, with_expr, with_gpu;
-    unsigned int gpu_device_id, verbose;
+    unsigned int gpu_device_id, verbose, pyramid_num;
+	std::vector<unsigned int> resolutions;
 	try {
 		options_description desc("Allowed options");
 		desc.add_options()
@@ -122,15 +218,17 @@ int main(int argc, char* argv[])
             ("expressions,e", value<bool>(&with_expr)->default_value(true), "with expressions")
 			("gpu", value<bool>(&with_gpu)->default_value(true), "toggle GPU / CPU")
 			("gpu_id", value<unsigned int>(&gpu_device_id)->default_value(0), "GPU's device id")
-            ("log", value<string>(&log_path)->default_value("face_swap_batch_log.csv"), "log file path")
-            ("cfg", value<string>(&cfg_path)->default_value("face_swap_batch.cfg"), "configuration file (.cfg)")
+			("pyramids,p", value<unsigned int>(&pyramid_num)->default_value(4), "number of pyramids")
+			("resolutions", value<std::vector<unsigned int>>(&resolutions), "list of resolutions")
+            ("log", value<string>(&log_path)->default_value("test_resolution_batch_log.csv"), "log file path")
+            ("cfg", value<string>(&cfg_path)->default_value("test_resolution_batch.cfg"), "configuration file (.cfg)")
 			;
 		variables_map vm;
 		store(command_line_parser(argc, argv).options(desc).
 			positional(positional_options_description().add("input", -1)).run(), vm);
 
         if (vm.count("help")) {
-            cout << "Usage: face_swap_batch [options]" << endl;
+            cout << "Usage: test_resolution_batch [options]" << endl;
             cout << desc << endl;
             exit(0);
         }
@@ -171,15 +269,9 @@ int main(int argc, char* argv[])
         if (verbose > 0)
             log.open(log_path);
 
-        // Parse image pairs
-        std::vector<std::pair<string, string>> img_pairs;
-        if (is_directory(input_path))
-        {
-            std::vector<string> img_paths;
-            getImagesFromDir(input_path, img_paths);
-            nchoose2(img_paths, img_pairs);
-        }
-        else readImagePairsFromFile(input_path, img_pairs);
+        // Parse image paths
+		std::vector<string> img_paths;
+		getImagesFromDir(input_path, img_paths);
 
 		// Initialize face swap
 		std::shared_ptr<face_swap::FaceSwapEngine> fs =
@@ -195,66 +287,39 @@ int main(int argc, char* argv[])
 
         // For each image pair
         string prev_src_path, prev_tgt_path;
-        cv::Mat source_img, target_img, rendered_img;
-        for (const auto& img_pair : img_pairs)
+        cv::Mat img, rendered_img;
+        for (const auto& img_path : img_paths)
         {
             // Check if output image already exists
-            path outputName = (path(img_pair.first).stem() += "_") +=
-                (path(img_pair.second).stem() += ".jpg");
+            path outputName = (path(img_path).stem() += ".jpg");
             string curr_output_path = (path(output_path) /= outputName).string();
             if (is_regular_file(curr_output_path))
             {
-                std::cout << "Skipping: " << path(img_pair.first).filename() <<
-                    " -> " << path(img_pair.second).filename() << std::endl;
+                std::cout << "Skipping: " << path(img_path).filename() << std::endl;
                 continue;
             }
-            std::cout << "Face swapping: " << path(img_pair.first).filename() <<
-                " -> " << path(img_pair.second).filename() << std::endl;
+            std::cout << "Processing: " << path(img_path).filename() << std::endl;
 
-			// Initialize source face data
-			face_swap::FaceData src_face_data;
-			if (!readFaceData(img_pair.first, src_face_data))
-			{
-				//src_face_data.enable_seg = true;
-				//src_face_data.max_bbox_res = 500;
+            // Read source and target images
+			img = cv::imread(img_path);
 
-				// Read source segmentations
-				if (seg_model_path.empty() && !seg_path.empty())
-				{
-					string src_seg_path = (path(seg_path) /=
-						(path(img_pair.first).stem() += ".png")).string();
-					if (is_regular_file(src_seg_path))
-						src_face_data.seg = cv::imread(src_seg_path, cv::IMREAD_GRAYSCALE);
-				}
-			}
-
-			// Initialize target face data
-			face_swap::FaceData tgt_face_data;
-			if (!readFaceData(img_pair.second, tgt_face_data))
-			{
-				//src_face_data.enable_seg = true;
-				//src_face_data.max_bbox_res = 500;
-
-				// Read source segmentations
-				if (seg_model_path.empty() && !seg_path.empty())
-				{
-					string src_seg_path = (path(seg_path) /=
-						(path(img_pair.second).stem() += ".png")).string();
-					if (is_regular_file(src_seg_path))
-						tgt_face_data.seg = cv::imread(src_seg_path, cv::IMREAD_GRAYSCALE);
-				}
-			}
+            // Read source and target segmentations
+            cv::Mat seg;
+            if (!(!(seg_model_path.empty() || seg_deploy_path.empty()) || seg_path.empty()))
+            {
+                string seg_path = (path(seg_path) /= (path(img_path).stem() += ".png")).string();
+                if (is_regular_file(seg_path))
+                    seg = cv::imread(seg_path, cv::IMREAD_GRAYSCALE);
+            }
 
             // Start measuring time
             timer.start();
 
-            // Do face swap
-            rendered_img = rendered_img = fs->swap(src_face_data, tgt_face_data);
-            if (rendered_img.empty())
-            {
-                logError(log, img_pair, "Face swap failed!", verbose);
-                continue;
-            }
+			// Run test
+			rendered_img = pyramidsTest(fs, img, pyramid_num);
+			//if (resolutions.empty())
+			//	rendered_img = pyramidsTest(fs, img, pyramid_num);
+			//else rendered_img = resolutionsTest(fs, img, resolutions, pyramid_num);
 
             // Stop measuring time
             timer.stop();
@@ -268,43 +333,6 @@ int main(int argc, char* argv[])
             fps = (++frame_counter) / total_time;
             std::cout << "total_time = " << total_time << std::endl;
             std::cout << "fps = " << fps << std::endl;
-
-			// Debug
-			if (verbose > 0)
-			{
-				// Write overlay image
-				string debug_overlay_path = (path(output_path) /=
-					(path(curr_output_path).stem() += "_overlay.jpg")).string();
-
-				cv::Mat debug_result_img = rendered_img.clone();
-				face_swap::renderImageOverlay(debug_result_img, tgt_face_data.scaled_bbox,
-					src_face_data.cropped_img, tgt_face_data.cropped_img, cv::Scalar());
-				cv::imwrite(debug_overlay_path, debug_result_img);
-			}
-			if (verbose > 1)
-			{
-				// Write rendered image
-				string debug_render_path = (path(output_path) /=
-					(path(curr_output_path).stem() += "_render.jpg")).string();
-
-				cv::Mat src_render = fs->renderFaceData(src_face_data, 3.0f);
-				cv::Mat tgt_render = fs->renderFaceData(tgt_face_data, 3.0f);
-				cv::Mat debug_render_img;
-				int width = std::min(src_render.cols, tgt_render.cols);
-				if (src_render.cols > width)
-				{
-					int height = (int)std::round(src_render.rows * (float(width) / src_render.cols));
-					cv::resize(src_render, src_render, cv::Size(width, height));
-				}
-				else
-				{
-					int height = (int)std::round(tgt_render.rows * (float(width) / tgt_render.cols));
-					cv::resize(tgt_render, tgt_render, cv::Size(width, height));
-				}
-				cv::vconcat(src_render, tgt_render, debug_render_img);
-
-				cv::imwrite(debug_render_path, debug_render_img);
-			}
         }
 	}
 	catch (std::exception& e)

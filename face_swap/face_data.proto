@@ -1,0 +1,22 @@
+syntax = "proto2";
+
+package face_swap.io;
+
+message FaceData {
+	optional bytes cropped_seg = 1;
+	repeated int32 scaled_landmarks = 2 [packed = true];
+	repeated int32 bbox = 3 [packed = true];
+	repeated float shape_coefficients = 4 [packed = true];
+	repeated float tex_coefficients = 5 [packed = true];
+	repeated float expr_coefficients = 6 [packed = true];
+	repeated float vecR = 7 [packed = true];
+	repeated float vecT = 8 [packed = true];
+	repeated float K = 9 [packed = true];
+	repeated float shape_coefficients_flipped = 10 [packed = true];
+	repeated float tex_coefficients_flipped = 11 [packed = true];
+	repeated float expr_coefficients_flipped = 12 [packed = true];
+	repeated float vecR_flipped = 13 [packed = true];
+	repeated float vecT_flipped = 14 [packed = true];
+	required bool enable_seg = 15;
+	required int32 max_bbox_res = 16;
+}

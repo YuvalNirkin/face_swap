@@ -52,11 +52,18 @@ BaselFaceEstimator::~BaselFaceEstimator(void)
 {
 }
 
-cv::Mat BaselFaceEstimator::getFaces(){
-	int* arr = new int[BaselFace::BaselFace_faces_h*BaselFace::BaselFace_faces_w];
-	memcpy(arr,BaselFace::BaselFace_faces,BaselFace::BaselFace_faces_h*BaselFace::BaselFace_faces_w*sizeof(int));
-	cv::Mat out(BaselFace::BaselFace_faces_h,BaselFace::BaselFace_faces_w,CV_32S,arr);
-	return out;
+//cv::Mat BaselFaceEstimator::getFaces(){
+//	int* arr = new int[BaselFace::BaselFace_faces_h*BaselFace::BaselFace_faces_w];
+//	memcpy(arr,BaselFace::BaselFace_faces,BaselFace::BaselFace_faces_h*BaselFace::BaselFace_faces_w*sizeof(int));
+//	cv::Mat out(BaselFace::BaselFace_faces_h,BaselFace::BaselFace_faces_w,CV_32S,arr);
+//	return out;
+//}
+
+// Yuval
+cv::Mat BaselFaceEstimator::getFaces()
+{
+	cv::Mat out(BaselFace::BaselFace_faces_h, BaselFace::BaselFace_faces_w, CV_32S, BaselFace::BaselFace_faces);
+	return out.clone();
 }
 
 cv::Mat BaselFaceEstimator::getFaces_fill(){

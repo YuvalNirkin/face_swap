@@ -2,7 +2,7 @@
 #pragma once
 //#include "cv.h"
 #include "highgui.h"
-#include "FTModel.h"
+//#include "FTModel.h"
 #include "BaselFace.h"
 
 class BaselFaceEstimator

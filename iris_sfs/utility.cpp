@@ -368,53 +368,53 @@ void write_ply4(char* outname, cv::Mat mat_Depth,std::vector<cv::Vec3b> colors,s
 	ply2.close();
 }
 
-void write_ply(char* outname, bool* visible, cv::Mat mat_Depth,std::vector<cv::Vec3b> colors,cv::Mat faces){
-	std::vector<int> vindices;
-	std::vector<int> vindices_inv;
-	std::vector<int> findices;
-	for (int i=0;i<colors.size();i++) {
-		if (visible[i]) {
-			vindices_inv.push_back(vindices.size());
-			vindices.push_back(i);
-		}
-		else
-			vindices_inv.push_back(-1);
-	}
-	//printf("vindices_inv %d\n",vindices_inv.size());
-	for (int i=0;i<faces.cols;i++) {
-		bool vis = true;
-		for (int j=0;j<3;j++)
-			if (!visible[faces.at<unsigned int>(j,i)]) {
-				vis = false; break;
-			}
-		if (vis) findices.push_back(i);
-	}
-
-	std::ofstream ply2( outname );
-	ply2 << "ply\n";
-	ply2 << "format ascii 1.0\n";
-	ply2 << "element vertex " << vindices.size() << std::endl;
-	ply2 << "property float x\n";
-	ply2 << "property float y\n";
-	ply2 << "property float z\n";
-	ply2 << "property uchar red\n";
-	ply2 << "property uchar green\n";
-	ply2 << "property uchar blue\n";
-	ply2 << "element face " << findices.size() << std::endl;
-	ply2 << "property list uchar int vertex_indices\n";
-	ply2 << "end_header\n";
-	for( int i = 0; i < vindices.size() ; i++ )
-	{
-		int ind = vindices[i];
-		ply2 << mat_Depth.at<double>(0,ind) << " " << mat_Depth.at<double>(1,ind) << " " << mat_Depth.at<double>(2,ind) << " " 
-			<< (int)colors[ind](2) << " " << (int)colors[ind](1) << " " << (int)colors[ind](0) <<  std::endl;
-	}
-	for( int i = 0; i < findices.size() ; i++ )
-	{
-		ply2 << "3 " << vindices_inv[faces.at<unsigned int>(0,findices[i])] << " " << vindices_inv[faces.at<unsigned int>(1,findices[i])] << " " << vindices_inv[faces.at<unsigned int>(2,findices[i])] << " " <<  std::endl;
-	}
-	ply2.close();
-}
+//void write_ply(char* outname, bool* visible, cv::Mat mat_Depth,std::vector<cv::Vec3b> colors,cv::Mat faces){
+//	std::vector<int> vindices;
+//	std::vector<int> vindices_inv;
+//	std::vector<int> findices;
+//	for (int i=0;i<colors.size();i++) {
+//		if (visible[i]) {
+//			vindices_inv.push_back(vindices.size());
+//			vindices.push_back(i);
+//		}
+//		else
+//			vindices_inv.push_back(-1);
+//	}
+//	//printf("vindices_inv %d\n",vindices_inv.size());
+//	for (int i=0;i<faces.cols;i++) {
+//		bool vis = true;
+//		for (int j=0;j<3;j++)
+//			if (!visible[faces.at<unsigned int>(j,i)]) {
+//				vis = false; break;
+//			}
+//		if (vis) findices.push_back(i);
+//	}
+//
+//	std::ofstream ply2( outname );
+//	ply2 << "ply\n";
+//	ply2 << "format ascii 1.0\n";
+//	ply2 << "element vertex " << vindices.size() << std::endl;
+//	ply2 << "property float x\n";
+//	ply2 << "property float y\n";
+//	ply2 << "property float z\n";
+//	ply2 << "property uchar red\n";
+//	ply2 << "property uchar green\n";
+//	ply2 << "property uchar blue\n";
+//	ply2 << "element face " << findices.size() << std::endl;
+//	ply2 << "property list uchar int vertex_indices\n";
+//	ply2 << "end_header\n";
+//	for( int i = 0; i < vindices.size() ; i++ )
+//	{
+//		int ind = vindices[i];
+//		ply2 << mat_Depth.at<double>(0,ind) << " " << mat_Depth.at<double>(1,ind) << " " << mat_Depth.at<double>(2,ind) << " " 
+//			<< (int)colors[ind](2) << " " << (int)colors[ind](1) << " " << (int)colors[ind](0) <<  std::endl;
+//	}
+//	for( int i = 0; i < findices.size() ; i++ )
+//	{
+//		ply2 << "3 " << vindices_inv[faces.at<unsigned int>(0,findices[i])] << " " << vindices_inv[faces.at<unsigned int>(1,findices[i])] << " " << vindices_inv[faces.at<unsigned int>(2,findices[i])] << " " <<  std::endl;
+//	}
+//	ply2.close();
+//}
 
 
 void write_plyF(char* outname, cv::Mat mat_Depth,std::vector<cv::Vec3b> colors,int nFaces, unsigned* faces){

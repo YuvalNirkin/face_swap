@@ -6,7 +6,6 @@ target_include_directories(face_swap_image PRIVATE
 target_link_libraries(face_swap_image PRIVATE
 	face_swap
 	${Boost_LIBRARIES}
-	Qt5::Widgets
 )
 
 # Installations

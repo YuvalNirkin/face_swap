@@ -1,7 +1,6 @@
 /* Copyright (c) 2015 USC, IRIS, Computer vision Lab */
 #include "FaceServices2.h"
 #include <fstream>
-//#include "opencv2/contrib/contrib.hpp"
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
@@ -33,8 +32,6 @@ void FaceServices2::setUp(int w, int h, float f){
 	faces = festimator.getFaces() - 1;
 	cv::Mat shape = festimator.getShape(cv::Mat(99,1,CV_32F));
 	tex = shape*0 + 128;
-	im_render = new FImRenderer(cv::Mat::zeros(h,w,CV_8UC3));
-	im_render->loadMesh(shape,shape*0,faces);
 }
 
 // Yuval
@@ -44,6 +41,7 @@ void FaceServices2::init(int w, int h, float f)
     memset(_k, 0, 9 * sizeof(float));
     _k[8] = 1;
     _k[0] = -f;
+//	_k[0] = f;
     _k[4] = f;
     _k[2] = w / 2.0f;
     _k[5] = h / 2.0f;
@@ -53,85 +51,6 @@ void FaceServices2::init(int w, int h, float f)
         faces = festimator.getFaces() - 1;
     cv::Mat shape = festimator.getShape(cv::Mat(99, 1, CV_32F));
     tex = shape * 0 + 128;
-
-    // Initialize image renderer
-    if (im_render == nullptr)
-    {
-        im_render = new FImRenderer(cv::Mat::zeros(h, w, CV_8UC3));
-        im_render->loadMesh(shape, shape * 0, faces);
-    }
-    else im_render->init(cv::Mat::zeros(h, w, CV_8UC3));
-}
-
-bool FaceServices2::projectCheckVis(FImRenderer* im_render, cv::Mat shape, float* r, float *t, cv::Mat refDepth, bool* &visible){
-	float zNear_ = im_render->zNear;
-	float zFar_ = im_render->zFar;
-
-	cv::Mat k_m( 3, 3, CV_32F, _k );
-
-	int nV = shape.rows;
-	if (visible == 0) visible = new bool[shape.rows];
-	cv::Mat rVec( 3, 1, CV_32F, r );
-	cv::Mat tVec( 3, 1, CV_32F, t );
-	cv::Mat rMat;
-	cv::Rodrigues(rVec, rMat);
-	cv::Mat new3D = rMat * shape.t() + cv::repeat(tVec,1,nV);
-
-	for (int i=0;i<nV;i++){
-		visible[i] = false;
-		float Z = new3D.at<float>(2,i);
-		float x = -new3D.at<float>(0,i)/Z*_k[4] + _k[2];
-		float y = new3D.at<float>(1,i)/Z*_k[4] + _k[5];
-		if (x > 0 && y > 0 & x < refDepth.cols-1 && y <refDepth.rows-1) {
-			for (int dx =-1;dx<2;dx++){
-				for (int dy =-1;dy<2;dy++){
-					float dd = refDepth.at<float>(y+dy,x+dx);
-					dd = - zNear_*zFar_   / ( zFar_ - dd * ( zFar_ - zNear_ ));
-					if (fabs(Z - dd) < 5){
-						visible[i] = true;
-					}
-				}
-			}
-		}
-	}
-
-	return true;
-}
-
-std::vector<cv::Point2f> FaceServices2::projectCheckVis2(FImRenderer* im_render, cv::Mat shape, float* r, float *t, cv::Mat refDepth, bool* &visible){
-	float zNear_ = im_render->zNear;
-	float zFar_ = im_render->zFar;
-
-	cv::Mat k_m( 3, 3, CV_32F, _k );
-	std::vector<cv::Point2f> out;
-	int nV = shape.rows;
-	if (visible == 0) visible = new bool[shape.rows];
-	cv::Mat rVec( 3, 1, CV_32F, r );
-	cv::Mat tVec( 3, 1, CV_32F, t );
-	cv::Mat rMat;
-	cv::Rodrigues(rVec, rMat);
-	cv::Mat new3D = rMat * shape.t() + cv::repeat(tVec,1,nV);
-
-	for (int i=0;i<nV;i++){
-		visible[i] = false;
-		float Z = new3D.at<float>(2,i);
-		float x = -new3D.at<float>(0,i)/Z*_k[4] + _k[2];
-		float y = new3D.at<float>(1,i)/Z*_k[4] + _k[5];
-		out.push_back(cv::Point2f(x,y));
-		if (x > 0 && y > 0 & x < refDepth.cols-1 && y <refDepth.rows-1) {
-			for (int dx =-1;dx<2;dx++){
-				for (int dy =-1;dy<2;dy++){
-					float dd = refDepth.at<float>(y+dy,x+dx);
-					dd = - zNear_*zFar_   / ( zFar_ - dd * ( zFar_ - zNear_ ));
-					if (fabs(Z - dd) < 2.5){
-						visible[i] = true;
-					}
-				}
-			}
-		}
-	}
-
-	return out;
 }
 
 float FaceServices2::updateHessianMatrix(bool part, cv::Mat alpha, float* renderParams, cv::Mat faces, cv::Mat colorIm,std::vector<int> lmInds, cv::Mat landIm, BFMParams &params, cv::Mat &prevR, cv::Mat &prevT, cv::Mat exprW ){
@@ -617,9 +536,6 @@ void FaceServices2::initRenderer(cv::Mat &colorIm){
     cv::Mat colors;
     cv::Mat shape = festimator.getShape(cv::Mat::zeros(1,1,CV_32F));
     cv::Mat tex = festimator.getTexture(cv::Mat::zeros(1,1,CV_32F));
-
-    im_render = new FImRenderer(cv::Mat::zeros(colorIm.rows,colorIm.cols,CV_8UC3));
-    im_render->loadMesh(shape,tex,faces_fill);
 }
 
 void FaceServices2::mergeIm(cv::Mat* output,cv::Mat bg,cv::Mat depth){
@@ -840,120 +756,6 @@ bool FaceServices2::updatePoseExpr(cv::Mat colorIm, cv::Mat lms, cv::Mat alpha, 
     }
 
     return true;
-}
-cv::Mat FaceServices2::testRender(cv::Mat colorIm, cv::Mat alpha,cv::Mat vecR,cv::Mat vecT,cv::Mat exprW, char* outDir, bool updateColor){
-	char text[200];
-	int M = 99;
-	float renderParams[RENDER_PARAMS_COUNT];
-	for (int i =0;i<3;i++)
-		renderParams[i] = vecR.at<float>(i,0);
-	for (int i =0;i<3;i++)
-		renderParams[i+3] = vecT.at<float>(i,0);
-	
-	////cv::Mat shape = festimator.getShape(alpha,exprW);
-	//cv::Mat faces_fill = festimator.getFaces_fill() - 1;
-	// Ambient
-	//renderParams[6] = 0.29225;
-	//renderParams[7] = 0.29225;
-	//renderParams[8] = 0.29225;
-	renderParams[6] = 0.49225;
-	renderParams[7] = 0.49225;
-	renderParams[8] = 0.49225;
-	// Diffuse
-	renderParams[9] = 0.50754;
-	renderParams[10] = 0.50754;
-	renderParams[11] = 0.50754;
-	// LIGHT
-	renderParams[12] = 3.1415/4;
-	renderParams[13] = 3.1415/4;
-	// OTHERS
-	renderParams[14] = 1;
-	renderParams[15] = renderParams[16] = renderParams[17] = RENDER_PARAMS_GAIN_DEFAULT;
-	renderParams[18] = renderParams[19] = renderParams[20] = RENDER_PARAMS_OFFSET_DEFAULT;
-		
-	Mat k_m(3,3,CV_32F,_k);
-	//RenderServices rs;
-	float* r = renderParams + RENDER_PARAMS_R;
-	float* t = renderParams + RENDER_PARAMS_T;
-	//printf("t %f %f %f\n",t[0],t[1],t[2]);
-
-		shape = festimator.getShape2(alpha,exprW);
-	//if (updateColor) {
-		cv::Mat colors;
-		tex = shape*0 + 128;
-
-		im_render->copyShape(shape);
-		bool* visible = new bool[im_render->face_->mesh_.nVertices_];
-		bool* noShadow = new bool[im_render->face_->mesh_.nVertices_];
-		memset(noShadow,true,im_render->face_->mesh_.nVertices_*sizeof(bool));
-		memset(visible,true,im_render->face_->mesh_.nVertices_*sizeof(bool));
-
-		rs.estimateColor(shape,tex,faces,visible,noShadow,renderParams,colors);
-		im_render->copyColors(colors);
-		delete visible; delete noShadow;
-		im_render->loadModel();
-	//}
-	cv::Mat refRGB = cv::Mat::zeros(colorIm.rows,colorIm.cols,CV_8UC3);
-	cv::Mat refDepth = cv::Mat::zeros(colorIm.rows,colorIm.cols,CV_32F);
-	im_render->render(r,t,_k[4],refRGB,refDepth);
-	return refRGB;
-}
-
-void FaceServices2::testRenderWDepth(cv::Mat colorIm, cv::Mat alpha,cv::Mat vecR,cv::Mat vecT,cv::Mat exprW, cv::Mat &refRGB, cv::Mat &refDepth){
-	char text[200];
-	int M = 99;
-	float renderParams[RENDER_PARAMS_COUNT];
-	for (int i =0;i<3;i++)
-		renderParams[i] = vecR.at<float>(i,0);
-	for (int i =0;i<3;i++)
-		renderParams[i+3] = vecT.at<float>(i,0);
-	
-	////cv::Mat shape = festimator.getShape(alpha,exprW);
-	//cv::Mat faces_fill = festimator.getFaces_fill() - 1;
-	// Ambient
-	//renderParams[6] = 0.29225;
-	//renderParams[7] = 0.29225;
-	//renderParams[8] = 0.29225;
-	renderParams[6] = 0.49225;
-	renderParams[7] = 0.49225;
-	renderParams[8] = 0.49225;
-	// Diffuse
-	renderParams[9] = 0.50754;
-	renderParams[10] = 0.50754;
-	renderParams[11] = 0.50754;
-	// LIGHT
-	renderParams[12] = 3.1415/4;
-	renderParams[13] = 3.1415/4;
-	// OTHERS
-	renderParams[14] = 1;
-	renderParams[15] = renderParams[16] = renderParams[17] = RENDER_PARAMS_GAIN_DEFAULT;
-	renderParams[18] = renderParams[19] = renderParams[20] = RENDER_PARAMS_OFFSET_DEFAULT;
-		
-	Mat k_m(3,3,CV_32F,_k);
-	//RenderServices rs;
-	float* r = renderParams + RENDER_PARAMS_R;
-	float* t = renderParams + RENDER_PARAMS_T;
-	//printf("t %f %f %f\n",t[0],t[1],t[2]);
-
-		shape = festimator.getShape2(alpha,exprW);
-	//if (updateColor) {
-		cv::Mat colors;
-		tex = shape*0 + 128;
-
-		im_render->copyShape(shape);
-		bool* visible = new bool[im_render->face_->mesh_.nVertices_];
-		bool* noShadow = new bool[im_render->face_->mesh_.nVertices_];
-		memset(noShadow,true,im_render->face_->mesh_.nVertices_*sizeof(bool));
-		memset(visible,true,im_render->face_->mesh_.nVertices_*sizeof(bool));
-
-		rs.estimateColor(shape,tex,faces,visible,noShadow,renderParams,colors);
-		im_render->copyColors(colors);
-		delete visible; delete noShadow;
-		im_render->loadModel();
-	//}
-	refRGB = cv::Mat::zeros(colorIm.rows,colorIm.cols,CV_8UC3);
-	refDepth = cv::Mat::zeros(colorIm.rows,colorIm.cols,CV_32F);
-	im_render->render(r,t,_k[4],refRGB,refDepth);
 }
 
 void FaceServices2::nextMotion(int &currFrame, cv::Mat &vecR, cv::Mat &vecT, cv::Mat &exprWeights){
