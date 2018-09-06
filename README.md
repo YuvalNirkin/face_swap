@@ -17,7 +17,7 @@ If you find this code useful, please make sure to cite our paper in your work.
 Version 1.0 is released:
 - Better performance and results.
 - Python binding.
-- Easier to build: removed many of the depenedencies.
+- Easier to build: removed many of the dependencies.
 - Software renderer: OpenGL is no longer required, the project can now be built on gui-less servers without any problems. 
 - Added low resolution segmentation model for GPUs with low memory.
 
@@ -51,7 +51,7 @@ Please cite our paper with the following bibtex if you use our face renderer:
 - [Hand augmentations](https://github.com/YuvalNirkin/egohands_augmentations), used to generate the hand augmentations for training the face segmentation.
 
 ## Copyright
-Copyright 2017, Yuval Nirkin, Iacopo Masi, Anh Tuan Tran, Tal Hassner, and Gerard Medioni 
+Copyright 2018, Yuval Nirkin, Iacopo Masi, Anh Tuan Tran, Tal Hassner, and Gerard Medioni 
 
 The SOFTWARE provided in this page is provided "as is", without any guarantee made as to its suitability or fitness for any particular use. It may contain bugs, so use of this tool is at your own risk. We take no responsibility for any damage of any sort that may unintentionally be caused through its use.
 
