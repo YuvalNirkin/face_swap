@@ -14,7 +14,7 @@ Please see [project page](http://www.openu.ac.il/home/hassner/projects/faceswap/
 If you find this code useful, please make sure to cite our paper in your work.
 
 ## News
-Version 1.0 is releaed:
+Version 1.0 is released:
 - Better performance and results.
 - Python binding.
 - Easier to build: removed many of the depenedencies.
@@ -32,7 +32,6 @@ Both Linux and Windows are supported.
 - For using the library's C++ interface, please take a look at the [Doxygen generated documentation](https://yuvalnirkin.github.io/docs/face_swap/).
 
 ## Citation
-
 Please cite our paper with the following bibtex if you use our face renderer:
 
 ``` latex
