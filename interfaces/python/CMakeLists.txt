@@ -13,9 +13,11 @@ target_link_libraries(face_swap_py
 	${PYTHON_LIBRARIES}
 	${Boost_LIBRARIES}
 )
+set_target_properties(face_swap_py PROPERTIES
+		PREFIX ""
+	)
 if(WIN32)
 	set_target_properties(face_swap_py PROPERTIES
-		PREFIX ""
 		SUFFIX ".pyd"
 	)
 endif()
