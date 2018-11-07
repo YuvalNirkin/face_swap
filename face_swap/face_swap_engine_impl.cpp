@@ -72,7 +72,8 @@ namespace face_swap
 		cv::Mat src_shape_coefficients, src_tex_coefficients, src_expr_coefficients;
 		cv::Mat src_vecR, src_vecT;
 		cv::Mat src_K = src_data.K;
-		if ((src_angle * tgt_angle) < 0 && std::abs(src_angle - tgt_angle) > (CV_PI / 18.0f))
+		if ((src_angle * tgt_angle) < 0 && std::abs(src_angle - tgt_angle) > (CV_PI / 18.0f) &&
+            std::abs(src_angle) > (CV_PI / 36.0f))
 		{
 			// Horizontal flip the source image
 			cv::flip(src_data.cropped_img, cropped_src, 1);
