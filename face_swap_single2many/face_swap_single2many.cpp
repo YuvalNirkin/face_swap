@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
 		options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "display the help message")
-            ("verbose,v", value<unsigned int>(&verbose)->default_value(0), "output debug information [0, 4]")
+            ("verbose,v", value<unsigned int>(&verbose)->default_value(0), "output debug information [0, 2]")
 			("sources", value<std::vector<string>>(&source_paths)->required(), "source paths")
 			("targets,t", value<std::vector<string>>(&target_paths)->required(), "target paths")
 			("source_seg", value<std::vector<bool>>(&toggle_source_seg), "toggle sources segmentation")
