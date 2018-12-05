@@ -31,6 +31,9 @@ using namespace boost::filesystem;
 const std::string IMAGE_FILTER =
 "(.*\\.(bmp|dib|jpeg|jpg|jpe|jp2|png|pbm|pgm|ppm|sr|ras))";
 
+const std::string VIDEO_FILTER =
+"(.*\\.(avi|mp4))";
+
 
 void getImagesFromDir(const std::string& dir_path, std::vector<std::string>& img_paths)
 {
@@ -55,9 +58,9 @@ void getImagesFromDir(const std::string& dir_path, std::vector<std::string>& img
 
 void parseInputPaths(const std::vector<std::string>& input_paths, std::vector<std::string>& img_paths, 
 	const std::vector<bool>& toggle_input_seg, std::vector<bool>& toggle_img_seg,
-	const std::vector<int>& input_max_res, std::vector<int>& img_max_res)
+	const std::vector<int>& input_max_res, std::vector<int>& img_max_res, const std::string& regex)
 {
-	boost::regex filter(IMAGE_FILTER);
+	boost::regex filter(regex);
 	boost::smatch what;
 
 	// For each input path
@@ -136,15 +139,15 @@ int main(int argc, char* argv[])
 			("cache,c", value<bool>(&cache)->default_value(false), "cache intermediate face data")
 			("gpu", value<bool>(&with_gpu)->default_value(true), "toggle GPU / CPU")
 			("gpu_id", value<unsigned int>(&gpu_device_id)->default_value(0), "GPU's device id")
-            ("log", value<string>(&log_path)->default_value("face_swap_single2many_log.csv"), "log file path")
-            ("cfg", value<string>(&cfg_path)->default_value("face_swap_single2many.cfg"), "configuration file (.cfg)")
+            ("log", value<string>(&log_path)->default_value("face_swap_image2video_log.csv"), "log file path")
+            ("cfg", value<string>(&cfg_path)->default_value("face_swap_image2video.cfg"), "configuration file (.cfg)")
 			;
 		variables_map vm;
 		store(command_line_parser(argc, argv).options(desc).
 			positional(positional_options_description().add("sources", -1)).run(), vm);
 
         if (vm.count("help")) {
-            cout << "Usage: face_swap_single2many [options]" << endl;
+            cout << "Usage: face_swap_image2video [options]" << endl;
             cout << desc << endl;
             exit(0);
         }
@@ -196,13 +199,13 @@ int main(int argc, char* argv[])
             log.open(log_path);
 
         // Parse image paths
-		std::vector<string> src_img_paths, tgt_img_paths;
+		std::vector<string> src_img_paths, tgt_vid_paths;
 		std::vector<bool> toggle_src_img_seg, toggle_tgt_img_seg;
 		std::vector<int> src_img_max_res, tgt_img_max_res;
 		parseInputPaths(source_paths, src_img_paths,  toggle_source_seg,
-			toggle_src_img_seg, source_max_res, src_img_max_res);
-		parseInputPaths(target_paths, tgt_img_paths, toggle_target_seg,
-			toggle_tgt_img_seg, target_max_res, tgt_img_max_res);
+			toggle_src_img_seg, source_max_res, src_img_max_res, IMAGE_FILTER);
+		parseInputPaths(target_paths, tgt_vid_paths, toggle_target_seg,
+			toggle_tgt_img_seg, target_max_res, tgt_img_max_res, VIDEO_FILTER);
 
         // Initialize face swap
 		std::shared_ptr<face_swap::FaceSwapEngine> fs =
@@ -216,7 +219,7 @@ int main(int argc, char* argv[])
         float total_time = 0.0f, fps = 0.0f;
         int frame_counter = 0;
 
-        // For each image pair
+        // For each image / video pair
 		for (size_t i = 0; i < src_img_paths.size(); ++i)
 		{
 			string& src_img_path = src_img_paths[i];
@@ -240,136 +243,85 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			for (size_t j = 0; j < tgt_img_paths.size(); ++j)
+            // Process source image
+            if (!fs->process(src_face_data, cache))
+            {
+                logError(log, std::make_pair(src_img_path, src_img_path), "Failed to find a face in source image!", verbose);
+                continue;
+            }
+
+            // For each target video
+			for (size_t j = 0; j < tgt_vid_paths.size(); ++j)
 			{
-				string& tgt_img_path = tgt_img_paths[j];
+				string& tgt_vid_path = tgt_vid_paths[j];
 				bool toggle_tgt_seg = toggle_tgt_img_seg[j];
 				int tgt_max_res = tgt_img_max_res[j];
 
-				if (src_img_path == tgt_img_path) continue;
+				if (src_img_path == tgt_vid_path) continue;
 
-				// Check if output image already exists
+				// Check if output video already exists
 				path outputName = (path(src_img_path).stem() += "_") +=
-					(path(tgt_img_path).stem() += ".jpg");
+					(path(tgt_vid_path).stem() += ".mp4");
 				string curr_output_path = (path(output_path) /= outputName).string();
 				if (is_regular_file(curr_output_path))
 				{
 					std::cout << "Skipping: " << path(src_img_path).filename() <<
-						" -> " << path(tgt_img_path).filename() << std::endl;
+						" -> " << path(tgt_vid_path).filename() << std::endl;
 					continue;
 				}
 				std::cout << "Face swapping: " << path(src_img_path).filename() <<
-					" -> " << path(tgt_img_path).filename() << std::endl;
+					" -> " << path(tgt_vid_path).filename() << std::endl;
 
-				// Initialize target face data
-				face_swap::FaceData tgt_face_data;
-				if (!readFaceData(tgt_img_path, tgt_face_data))
-				{
-					tgt_face_data.enable_seg = toggle_tgt_seg;
-					tgt_face_data.max_bbox_res = tgt_max_res;
+                // Initialize target video
+                cv::VideoCapture tgt_vid(tgt_vid_path);
+                cv::Size tgt_size((int)tgt_vid.get(cv::CAP_PROP_FRAME_WIDTH),
+                    (int)tgt_vid.get(cv::CAP_PROP_FRAME_HEIGHT));
+                double tgt_fps = tgt_vid.get(cv::CAP_PROP_FPS);
 
-					// Read target segmentations
-					if (toggle_tgt_seg && seg_model_path.empty() && !seg_path.empty())
-					{
-						string tgt_seg_path = (path(seg_path) /=
-							(path(tgt_img_path).stem() += ".png")).string();
-						if (is_regular_file(tgt_seg_path))
-							tgt_face_data.seg = cv::imread(tgt_seg_path, cv::IMREAD_GRAYSCALE);
-					}
-				}
+                // Initialize output video
+                cv::VideoWriter out_vid(curr_output_path, CV_FOURCC('H', '2', '6', '4'), tgt_fps, tgt_size);
+                cv::VideoWriter render_vid;
+                if (verbose > 0)
+                {
+                    string debug_render_path = (path(output_path) /=
+                        (path(curr_output_path).stem() += "_render.mp4")).string();
+                    render_vid.open(debug_render_path, CV_FOURCC('H', '2', '6', '4'), tgt_fps, tgt_size);
+                }
 
-				// Start measuring time
-				timer.start();
+                // Main processing loop
+                cv::Mat frame, rendered_img;
+                while (tgt_vid.read(frame))
+                {
+                    if (frame.empty()) continue;
 
-				// Do face swap
-				std::cout << "Processing source image..." << std::endl;
-				if (!fs->process(src_face_data, cache))
-				{
-					logError(log, std::make_pair(src_img_path, tgt_img_path), "Failed to find a face in source image!", verbose);
-					continue;
-				}
-				else if (cache)
-					writeFaceData(src_img_path, src_face_data, false);
+                    // Initialize target face data
+                    face_swap::FaceData tgt_face_data;
+                    tgt_face_data.img = frame;
+                    tgt_face_data.enable_seg = toggle_tgt_seg;
+                    tgt_face_data.max_bbox_res = tgt_max_res;
 
-				std::cout << "Processing target image..." << std::endl;
-				if(!fs->process(tgt_face_data, cache))
-				{
-					logError(log, std::make_pair(src_img_path, tgt_img_path), "Failed to find a face in target image!", verbose);
-					continue;
-				}
-				else if (cache)
-					writeFaceData(tgt_img_path, tgt_face_data, false);
+                    // Start measuring time
+                    timer.start();
 
-				std::cout << "Swapping images..." << std::endl;
-				cv::Mat rendered_img;
-				if (!reverse) rendered_img = fs->swap(src_face_data, tgt_face_data);
-				else rendered_img = fs->swap(tgt_face_data, src_face_data);
-				if (rendered_img.empty())
-				{
-					logError(log, std::make_pair(src_img_path, tgt_img_path), "Face swap failed!", verbose);
-					continue;
-				}
+                    // Do face swap
+                    cv::Mat rendered_img;
+                    if (!reverse) rendered_img = fs->swap(src_face_data, tgt_face_data);
+                    else rendered_img = fs->swap(tgt_face_data, src_face_data);
+                    if (rendered_img.empty())
+                        rendered_img = frame;
 
-				// Stop measuring time
-				timer.stop();
+                    // Stop measuring time
+                    timer.stop();
 
-				// Write output to file
-				std::cout << "Writing " << outputName << " to output directory." << std::endl;
-				cv::imwrite(curr_output_path, rendered_img);
+                    // Write frame to output video
+                    out_vid.write(rendered_img);
+                }
 
 				// Print current fps
 				total_time += (timer.elapsed().wall*1.0e-9);
 				fps = (++frame_counter) / total_time;
 				std::cout << "total_time = " << total_time << std::endl;
 				std::cout << "fps = " << fps << std::endl;
-
-				// Debug
-				if (verbose > 0)
-				{
-					// Write overlay image
-					string debug_overlay_path = (path(output_path) /=
-						(path(curr_output_path).stem() += "_overlay.jpg")).string();
-
-					cv::Mat debug_result_img = rendered_img.clone();
-					face_swap::renderImageOverlay(debug_result_img, tgt_face_data.scaled_bbox,
-						src_face_data.cropped_img, tgt_face_data.cropped_img, cv::Scalar());
-					cv::imwrite(debug_overlay_path, debug_result_img);
-				}
-				if (verbose > 1)
-				{
-					// Write rendered image
-					string debug_render_path = (path(output_path) /=
-						(path(curr_output_path).stem() += "_render.jpg")).string();
-
-					cv::Mat src_render = fs->renderFaceData(src_face_data, 3.0f);
-					cv::Mat tgt_render = fs->renderFaceData(tgt_face_data, 3.0f);
-					cv::Mat debug_render_img;
-					int width = std::min(src_render.cols, tgt_render.cols);
-					if (src_render.cols > width)
-					{
-						int height = (int)std::round(src_render.rows * (float(width) / src_render.cols));
-						cv::resize(src_render, src_render, cv::Size(width, height));
-					}
-					else
-					{
-						int height = (int)std::round(tgt_render.rows * (float(width) / tgt_render.cols));
-						cv::resize(tgt_render, tgt_render, cv::Size(width, height));
-					}
-					cv::vconcat(src_render, tgt_render, debug_render_img);
-
-					cv::imwrite(debug_render_path, debug_render_img);
-				}
-				//if (verbose > 1)
-				//{
-				//	// Write result image
-				//	string debug_result_path = (path(output_path) /=
-				//		(path(curr_output_path).stem() += "_result.jpg")).string();
-
-				//	cv::Mat debug_result_img = face_swap::renderImagePipe(
-				//	{ src_face_data.img, tgt_face_data.img, rendered_img });
-
-				//	cv::imwrite(debug_result_path, debug_result_img);
-				//}
 			}
 		} 
 	}
